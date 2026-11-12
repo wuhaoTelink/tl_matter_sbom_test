@@ -61,6 +61,11 @@ jobs:
             # v1.6.1 branch's own examples-telink.yaml uses. Pinned by digest so the
             # toolchain cannot shift under a build.
             image: ghcr.io/project-chip/chip-build-telink@sha256:82a785fc06f42a2589415223defd06d1fe6a6ef43148fc3840518b1b23820c9f
+            # Mount the host root so .github/actions/maximize-runner-disk can prune
+            # dotnet/android/ghc/swift; without this it exits early and the 14 GB
+            # runner disk overflows while restoring the 1.5 GB bootstrap cache.
+            volumes:
+                - "/:/runner-root-volume"
 
         steps:
             - name: Checkout
