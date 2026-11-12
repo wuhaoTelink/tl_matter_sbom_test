@@ -126,7 +126,7 @@ jobs:
                   mkdir -p out/sbom
                   MAP=out/telink-build/zephyr/zephyr.map
                   grep -oE '[A-Za-z0-9_.-]+\.a\(' "$MAP" 2>/dev/null | sed 's/($//' | sort -u > /tmp/linked-archives.txt
-                  find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null > /tmp/all-archives.txt
+                  find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -path '*/.environment/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null > /tmp/all-archives.txt
                   find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null >> /tmp/all-archives.txt
                   {
                     echo "# Prebuilt archives linked into zephyr.elf that are not generated"
@@ -135,7 +135,9 @@ jobs:
                     echo
                     while IFS= read -r f; do
                       b="$(basename "$f")"
-                      grep -qxF "$b" /tmp/linked-archives.txt && echo "$f"
+                      if grep -qxF "$b" /tmp/linked-archives.txt; then
+                        echo "${f#$GITHUB_WORKSPACE/}"
+                      fi
                     done < /tmp/all-archives.txt
                   } | sort -u > out/sbom/prebuilt-binaries.txt
                   cat out/sbom/prebuilt-binaries.txt
