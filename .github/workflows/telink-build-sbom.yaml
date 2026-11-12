@@ -95,6 +95,15 @@ jobs:
                   REV="$(git rev-parse HEAD)"
                   python3 scripts/tools/telink/gn_sources_to_spdx.py --ninja-log "$GN_OUT/.ninja_log" --compile-db "$GN_OUT/compile_commands.json" --repo-root "$PWD" --out out/sbom/matter-sources.spdx --purl "pkg:github/${GITHUB_REPOSITORY}@$REV" --download-location "git+https://github.com/${GITHUB_REPOSITORY}@$REV" --version "$REV"
 
+            # zspdx lists every module in the west workspace, including the ~50
+            # vendor HALs that `west update` fetches but a TL3238 build never
+            # compiles. Those are development-environment noise: an SBOM
+            # describes the firmware, not the disk. A module is kept when the
+            # linker map shows one of its archives or it has compiled files.
+            - name: Keep only modules that were actually linked
+              run: |
+                  python3 scripts/tools/telink/filter_sbom.py --sbom-dir out/sbom --map out/telink-build/zephyr/zephyr.map
+
             - name: Enrich SBOM for NTIA compliance
               run: |
                   python3 scripts/tools/telink/enrich_sbom.py out/sbom
@@ -107,22 +116,27 @@ jobs:
               run: |
                   python3 scripts/tools/telink/sbom_review.py out/sbom/enriched --out-dir out/sbom/review
 
-            # west spdx only sees what CMake/GN compiled. Prebuilt libraries that
-            # ship inside the SDK (tl_openthread_libs, the BLE SDK binaries) are not
-            # part of that graph, so list them explicitly instead of silently
-            # implying the SBOM is complete.
-            - name: List prebuilt binaries outside the source SBOM
+            # Prebuilt archives that the linker actually pulled objects from.
+            # Listing every .a in every module produced 1281 entries, most of
+            # which never reach the firmware; intersect with the linker map.
+            - name: List prebuilt archives linked into the firmware
               if: always()
               run: |
                   mkdir -p out/sbom
+                  MAP=out/telink-build/zephyr/zephyr.map
+                  grep -oE '[A-Za-z0-9_.-]+\.a\(' "$MAP" 2>/dev/null | sed 's/($//' | sort -u > /tmp/linked-archives.txt
                   {
-                    echo "# Prebuilt binaries that are NOT produced by this build."
-                    echo "# west spdx only sees what CMake/GN compiled, so shipped .a/.lib"
-                    echo "# files (e.g. telink-semi/tl_openthread_libs) must be declared"
-                    echo "# separately, via sdk-sbom metadata or a manual entry."
+                    echo "# Prebuilt archives linked into zephyr.elf that are not generated"
+                    echo "# by this build. The SBOM covers their sources through the module"
+                    echo "# packages; this list is what has to be declared as binary."
                     echo
-                    find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
-                    find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
+                    while IFS= read -r f; do
+                      b="$(basename "$f")"
+                      grep -qxF "$b" /tmp/linked-archives.txt && echo "$f"
+                    done < <(
+                      find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
+                      find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
+                    )
                   } | sort -u > out/sbom/prebuilt-binaries.txt
                   cat out/sbom/prebuilt-binaries.txt
 
