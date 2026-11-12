@@ -47,6 +47,7 @@ Writes *.spdx into <sbom-dir>/enriched/ unless --in-place is given.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -340,7 +341,37 @@ def main():
     print(f"{'TOTAL':22} {totals['packages']:4d} pkg | "
           f"+{totals['supplier']:4d} supplier  +{totals['license']:4d} license  "
           f"+{totals['purl']:4d} purl")
+
+    update_external_refs(dst)
     print(f"\nwritten to: {dst}")
+
+
+def update_external_refs(dst):
+    """Point build.spdx at the documents as they exist in this directory.
+
+    zspdx writes ExternalDocumentRef with the checksum of the raw documents.
+    Enrichment rewrites those documents, so shipping the enriched set with the
+    original checksums makes the set internally inconsistent -- a consumer that
+    verifies the references rejects it.
+    """
+    build = os.path.join(dst, "build.spdx")
+    if not os.path.exists(build):
+        return
+    text = open(build, encoding="utf-8").read()
+    updated = 0
+    for name in sorted(os.listdir(dst)):
+        if not name.endswith(".spdx") or name == "build.spdx":
+            continue
+        doc = name[: -len(".spdx")]
+        path = os.path.join(dst, name)
+        sha1 = hashlib.sha1(open(path, "rb").read()).hexdigest()
+        pattern = re.compile(
+            r"(ExternalDocumentRef:\s+\S+\s+\S*/" + re.escape(doc) + r"\s+SHA1:\s*)[0-9a-f]{40}")
+        text, n = pattern.subn(lambda m: m.group(1) + sha1, text)
+        updated += n
+    with open(build, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    print(f"build.spdx: refreshed {updated} ExternalDocumentRef checksum(s)")
 
 
 if __name__ == "__main__":
