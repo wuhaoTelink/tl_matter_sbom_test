@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "License determinations for the components that appear in the tl_matter SBOM.",
+    "",
+    "zspdx can only read an explicit 'SPDX-License-Identifier:' tag. Several",
+    "upstream projects instead embed the full license text -- openthread's",
+    "sources carry the complete 28-line BSD-3-Clause body with no tag -- so all",
+    "of their files come back NONE and the package ends up NOASSERTION.",
+    "",
+    "This file is the human answer to that. It is read by enrich_sbom.py and is",
+    "meant to be edited by the team, not generated. Keys are 'org/repo' exactly",
+    "as they appear in the SPDX PackageDownloadLocation.",
+    "",
+    "'licenses' entries are confirmed and applied automatically.",
+    "'needs_review' entries are NOT applied -- they are listed so the review",
+    "report can explain why a component is still unresolved. Move an entry up",
+    "to 'licenses' once someone has confirmed it.",
+    "",
+    "Only SPDX license identifiers or SPDX expressions belong in 'licenses'.",
+    "The script validates the value is non-empty but cannot verify it is a real",
+    "SPDX id -- that is the reviewer's responsibility."
+  ],
+
+  "licenses": {
+    "zephyrproject-rtos/openthread": "BSD-3-Clause",
+    "zephyrproject-rtos/mcuboot": "Apache-2.0",
+    "zephyrproject-rtos/littlefs": "BSD-3-Clause",
+    "zephyrproject-rtos/lvgl": "MIT",
+    "zephyrproject-rtos/zcbor": "Apache-2.0",
+    "zephyrproject-rtos/liblc3": "Apache-2.0",
+    "zephyrproject-rtos/mipi-sys-t": "BSD-3-Clause",
+    "zephyrproject-rtos/tflite-micro": "Apache-2.0"
+  },
+
+  "needs_review": {
+    "zephyrproject-rtos/fatfs": "No LICENSE file the GitHub API can identify. FatFs uses a custom permissive license (SPDX: BSD-1-Clause); confirm against the source headers.",
+    "zephyrproject-rtos/tinycrypt": "No LICENSE file the GitHub API can identify. Confirm from the source headers.",
+    "zephyrproject-rtos/percepio": "No LICENSE file the GitHub API can identify. TraceRecorder is believed MIT; confirm.",
+    "zephyrproject-rtos/segger": "No LICENSE file the GitHub API can identify. Confirm from the source headers.",
+    "zephyrproject-rtos/picolibc": "GitHub API reports NOASSERTION -- picolibc is a mix of BSD-2-Clause and MIT. Needs a compound expression.",
+    "telink-semi/hal_telink": "No LICENSE file at the repository root. This is Telink's own code and needs an internal legal determination.",
+    "telink-semi/xz": "GitHub API reports NOASSERTION -- XZ Utils is public domain OR LGPL-2.1-or-later depending on the file. Needs a compound expression.",
+    "telink-semi/openthread_telink_lib": "Telink fork of the OpenThread library. Likely inherits OpenThread's BSD-3-Clause; confirm.",
+    "telink-semi/nfc_st25dv": "Telink component. Needs an internal determination.",
+    "telink-semi/tl_st25dv": "Telink component. Needs an internal determination.",
+    "telink-semi/tflite-micro-telink": "Telink fork of TensorFlow Lite Micro. Likely Apache-2.0; confirm.",
+    "Aaronlu1/tl_matter": "The Matter stack itself. connectedhomeip is Apache-2.0; on the company repository this key becomes 'telink-semi/tl_matter'.",
+    "Mbed-TLS/mbedtls": "Duplicate view of mbedtls. zspdx reports the module twice with different purls: 'zephyrproject-rtos/mbedtls' (the Zephyr module, which resolves) and 'Mbed-TLS/mbedtls' (upstream, from modules-deps.spdx). Same code, same license: Apache-2.0 OR GPL-2.0-or-later."
+  }
+}

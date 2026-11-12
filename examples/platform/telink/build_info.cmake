@@ -37,11 +37,28 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-execute_process(
-    COMMAND python3 -c "from datetime import datetime; print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))"
-    OUTPUT_VARIABLE BUILD_TIMESTAMP
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# BUILD_TIMESTAMP is baked into the firmware via target_compile_definitions and
+# printed by AppTaskCommon::PrintFirmwareInfo(). Taking it from datetime.now()
+# makes every build of the same commit differ, so an SBOM cannot be used to
+# verify a shipped binary.
+#
+# Honour SOURCE_DATE_EPOCH when it is set -- the standard lever binutils and
+# GCC already respect -- and fall back to the wall clock otherwise. The
+# timestamp is still real and useful for field debugging; it is just
+# reproducible when the build asks for it.
+if (DEFINED ENV{SOURCE_DATE_EPOCH})
+    execute_process(
+        COMMAND python3 -c "import os, datetime; print(datetime.datetime.fromtimestamp(int(os.environ['SOURCE_DATE_EPOCH']), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))"
+        OUTPUT_VARIABLE BUILD_TIMESTAMP
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+else()
+    execute_process(
+        COMMAND python3 -c "from datetime import datetime; print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))"
+        OUTPUT_VARIABLE BUILD_TIMESTAMP
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
 
 execute_process(
     COMMAND git show -s --format=%cd --date=format:%Y-%m-%d

@@ -9,3 +9,7 @@ src/controller/python/matter/clusters/Objects.py linguist-generated
 **/*.bat eol=input
 # Mark Matter operational certificate/key files as binary
 **/*.chip binary
+
+# Shell scripts run inside the Linux build containers; a CRLF checkout makes
+# them fail with a confusing "bad interpreter" error. Keep them LF everywhere.
+**/*.sh text eol=lf
