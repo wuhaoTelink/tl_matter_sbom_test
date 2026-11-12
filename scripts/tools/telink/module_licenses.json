@@ -29,7 +29,8 @@
     "zephyrproject-rtos/zcbor": "Apache-2.0",
     "zephyrproject-rtos/liblc3": "Apache-2.0",
     "zephyrproject-rtos/mipi-sys-t": "BSD-3-Clause",
-    "zephyrproject-rtos/tflite-micro": "Apache-2.0"
+    "zephyrproject-rtos/tflite-micro": "Apache-2.0",
+    "Mbed-TLS/mbedtls": "Apache-2.0 OR GPL-2.0-or-later"
   },
 
   "needs_review": {
@@ -44,7 +45,6 @@
     "telink-semi/nfc_st25dv": "Telink component. Needs an internal determination.",
     "telink-semi/tl_st25dv": "Telink component. Needs an internal determination.",
     "telink-semi/tflite-micro-telink": "Telink fork of TensorFlow Lite Micro. Likely Apache-2.0; confirm.",
-    "Aaronlu1/tl_matter": "The Matter stack itself. connectedhomeip is Apache-2.0; on the company repository this key becomes 'telink-semi/tl_matter'.",
-    "Mbed-TLS/mbedtls": "Duplicate view of mbedtls. zspdx reports the module twice with different purls: 'zephyrproject-rtos/mbedtls' (the Zephyr module, which resolves) and 'Mbed-TLS/mbedtls' (upstream, from modules-deps.spdx). Same code, same license: Apache-2.0 OR GPL-2.0-or-later."
+    "Aaronlu1/tl_matter": "The Matter stack itself. connectedhomeip is Apache-2.0; on the company repository this key becomes 'telink-semi/tl_matter'."
   }
 }

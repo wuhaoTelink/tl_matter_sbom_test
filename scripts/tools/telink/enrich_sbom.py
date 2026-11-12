@@ -128,6 +128,41 @@ def repo_from_location(download_location):
     return g.group("org"), repo
 
 
+_GITHUB_PURL_RE = re.compile(r"^pkg:github/(?P<org>[^/]+)/(?P<repo>[^@?#]+)")
+
+
+def purl_of(lines):
+    """Return the PACKAGE_MANAGER purl of a package block, if any."""
+    for line in lines:
+        if line.startswith("ExternalRef: PACKAGE_MANAGER purl "):
+            return line.split()[-1]
+    return None
+
+
+def repo_from_purl(purl):
+    """Return (org, repo) for a pkg:github purl, else (None, None)."""
+    m = _GITHUB_PURL_RE.match(purl or "")
+    if not m:
+        return None, None
+    repo = m.group("repo")
+    if repo.endswith(".git"):
+        repo = repo[: -len(".git")]
+    return m.group("org"), repo
+
+
+def repo_for(lines, download_location):
+    """Repository identity from the VCS location, falling back to the purl.
+
+    zspdx emits `PackageDownloadLocation: NOASSERTION` for the modules-deps
+    documents but still records a purl there, so the download location alone
+    leaves those packages without a supplier or a licence lookup.
+    """
+    org, repo = repo_from_location(download_location)
+    if org:
+        return org, repo
+    return repo_from_purl(purl_of(lines))
+
+
 def revision_from_location(download_location, fallback_version=""):
     """Return the VCS revision with the west state suffix stripped."""
     m = _VCS_RE.match(download_location or "")
@@ -174,7 +209,10 @@ def package_license_declared(lines, download_location, license_map):
 
     # Files carry no SPDX tag (full-text license headers). Fall back to the
     # team-confirmed license for this repository, if there is one.
-    return license_from_repo(download_location, license_map)
+    org, repo = repo_for(lines, download_location)
+    if not org:
+        return None
+    return license_map.get(f"{org}/{repo}")
 
 
 def enrich_block(lines, default_supplier, license_map):
@@ -187,7 +225,7 @@ def enrich_block(lines, default_supplier, license_map):
 
     # --- PackageSupplier -------------------------------------------------
     if field(lines, "PackageSupplier") is None:
-        org, _ = repo_from_location(dl)
+        org, _ = repo_for(lines, dl)
         additions["PackageSupplier"] = org if org else default_supplier
 
     # --- PackageLicenseDeclared -----------------------------------------
