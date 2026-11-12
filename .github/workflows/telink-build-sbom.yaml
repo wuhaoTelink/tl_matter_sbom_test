@@ -121,10 +121,13 @@ jobs:
             # which never reach the firmware; intersect with the linker map.
             - name: List prebuilt archives linked into the firmware
               if: always()
+              shell: bash
               run: |
                   mkdir -p out/sbom
                   MAP=out/telink-build/zephyr/zephyr.map
                   grep -oE '[A-Za-z0-9_.-]+\.a\(' "$MAP" 2>/dev/null | sed 's/($//' | sort -u > /tmp/linked-archives.txt
+                  find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null > /tmp/all-archives.txt
+                  find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null >> /tmp/all-archives.txt
                   {
                     echo "# Prebuilt archives linked into zephyr.elf that are not generated"
                     echo "# by this build. The SBOM covers their sources through the module"
@@ -133,10 +136,7 @@ jobs:
                     while IFS= read -r f; do
                       b="$(basename "$f")"
                       grep -qxF "$b" /tmp/linked-archives.txt && echo "$f"
-                    done < <(
-                      find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
-                      find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
-                    )
+                    done < /tmp/all-archives.txt
                   } | sort -u > out/sbom/prebuilt-binaries.txt
                   cat out/sbom/prebuilt-binaries.txt
 
