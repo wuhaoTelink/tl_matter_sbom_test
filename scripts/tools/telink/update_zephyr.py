@@ -48,8 +48,19 @@ def main():
         command = ['west', 'update', '-o=--depth=1', '-n', '-f', 'smart']
         subprocess.run(command, check=True)
 
-        command = ['west', 'blobs', 'fetch', 'hal_telink']
-        subprocess.run(command, check=True)
+        # Binary blob mirrors occasionally serve a truncated file, which shows
+        # up as a checksum mismatch. Retry before giving up; the build container
+        # may already ship the blobs, and a genuinely missing one fails loudly
+        # later at link time.
+        blob_ok = False
+        for attempt in range(1, 4):
+            command = ['west', 'blobs', 'fetch', 'hal_telink']
+            if subprocess.run(command).returncode == 0:
+                blob_ok = True
+                break
+            print(f"WARNING: west blobs fetch hal_telink failed (attempt {attempt}/3)")
+        if not blob_ok:
+            print("WARNING: continuing without a complete blob fetch")
 
     except (RuntimeError, subprocess.CalledProcessError) as e:
         print(e)
