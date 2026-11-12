@@ -20,7 +20,7 @@
 #   BLE SDK: telink-semi/tl_ble_sdk_zephyr                  f50d422d780efb73af939650ef7b8c6bf5a0b99b
 #
 # The container ships a pre-cloned tl_zephyr; update_zephyr.py pins it to the
-# release revision, then fetch_sdk.sh brings in the matching BLE SDK.
+# release revision; west update also fetches tl_ble_sdk per west.yml.
 
 name: Telink Build + SBOM
 
@@ -47,8 +47,7 @@ concurrency:
 env:
     CHIP_NO_LOG_TIMESTAMPS: true
     TELINK_ZEPHYR_REV: 80de0ea4045869967c6b8e3d86b761955b1c981b
-    TELINK_BLE_SDK_URL: https://github.com/telink-semi/tl_ble_sdk_zephyr.git
-    TELINK_BLE_SDK_REV: f50d422d780efb73af939650ef7b8c6bf5a0b99b
+    # tl_ble_sdk is pinned by tl_zephyr west.yml (f50d422d780efb73af939650ef7b8c6bf5a0b99b)
     SBOM_NAMESPACE_PREFIX: https://github.com/${{ github.repository }}
 
 jobs:
@@ -79,13 +78,9 @@ jobs:
               with:
                   platform: telink
 
-            - name: Pin Telink Zephyr to the release revision
+            - name: Pin Telink Zephyr and modules to the release revision
               run: |
                   scripts/run_in_build_env.sh "python3 scripts/tools/telink/update_zephyr.py $TELINK_ZEPHYR_REV"
-
-            - name: Fetch the matching Telink BLE SDK
-              run: |
-                  bash "$TELINK_ZEPHYR_BASE/../modules/hal/telink/hal_v2/fetch_sdk.sh" "$TELINK_BLE_SDK_URL" "$TELINK_BLE_SDK_REV"
 
             - name: Build example and generate SPDX SBOM
               run: |
