@@ -48,7 +48,10 @@ env:
     CHIP_NO_LOG_TIMESTAMPS: true
     TELINK_ZEPHYR_REV: 80de0ea4045869967c6b8e3d86b761955b1c981b
     # tl_ble_sdk is pinned by tl_zephyr west.yml (f50d422d780efb73af939650ef7b8c6bf5a0b99b)
-    SBOM_NAMESPACE_PREFIX: https://github.com/${{ github.repository }}
+    # SPDX wants a namespace that is unique per document version; putting the
+    # commit in the path keeps two builds of different revisions apart while
+    # still naming the project they belong to.
+    SBOM_NAMESPACE_PREFIX: https://github.com/${{ github.repository }}/spdx/${{ github.sha }}
 
 jobs:
     build-sbom:
@@ -93,7 +96,7 @@ jobs:
               run: |
                   GN_OUT=out/telink-build/modules/chip-module
                   REV="$(git rev-parse HEAD)"
-                  python3 scripts/tools/telink/gn_sources_to_spdx.py --ninja-log "$GN_OUT/.ninja_log" --compile-db "$GN_OUT/compile_commands.json" --repo-root "$PWD" --out out/sbom/matter-sources.spdx --purl "pkg:github/${GITHUB_REPOSITORY}@$REV" --download-location "git+https://github.com/${GITHUB_REPOSITORY}@$REV" --version "$REV"
+                  python3 scripts/tools/telink/gn_sources_to_spdx.py --ninja-log "$GN_OUT/.ninja_log" --compile-db "$GN_OUT/compile_commands.json" --repo-root "$PWD" --out out/sbom/matter-sources.spdx --purl "pkg:github/${GITHUB_REPOSITORY}@$REV" --download-location "git+https://github.com/${GITHUB_REPOSITORY}@$REV" --version "$REV" --namespace "https://github.com/${GITHUB_REPOSITORY}/spdx/${REV}/matter-sources"
 
             # zspdx lists every module in the west workspace, including the ~50
             # vendor HALs that `west update` fetches but a TL3238 build never
