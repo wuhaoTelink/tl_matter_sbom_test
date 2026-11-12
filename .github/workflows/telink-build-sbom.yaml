@@ -1,0 +1,188 @@
+# Copyright (c) 2026 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Build one Telink Matter example and emit an SPDX / CycloneDX SBOM.
+#
+# Baseline: SDK v1.1.0.0 (see Matter_Zigbee_Dual_Mode_SDK_Release_Info.pdf, section 2):
+#   Matter : telink-semi/tl_matter  dev-tl3238x_prj_v1.6.1  23123f5786f7917427b5b1e985a28b29125bf1db
+#   Zephyr : telink-semi/tl_zephyr  dev-tl3238x_prj_v4.1    80de0ea4045869967c6b8e3d86b761955b1c981b
+#   BLE SDK: telink-semi/tl_ble_sdk_zephyr                  f50d422d780efb73af939650ef7b8c6bf5a0b99b
+#
+# The container ships a pre-cloned tl_zephyr; update_zephyr.py pins it to the
+# release revision, then fetch_sdk.sh brings in the matching BLE SDK.
+
+name: Telink Build + SBOM
+
+on:
+    workflow_dispatch:
+        inputs:
+            board:
+                description: "Zephyr board target"
+                required: true
+                default: tl3238x_retention
+            app:
+                description: "Example source dir (relative to repo root)"
+                required: true
+                default: examples/light-switch-app/telink
+    push:
+        branches:
+            - dev-tl3238x_prj_v1.6.1
+            - 'ci/**'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    CHIP_NO_LOG_TIMESTAMPS: true
+    TELINK_ZEPHYR_REV: 80de0ea4045869967c6b8e3d86b761955b1c981b
+    TELINK_BLE_SDK_URL: https://github.com/telink-semi/tl_ble_sdk_zephyr.git
+    TELINK_BLE_SDK_REV: f50d422d780efb73af939650ef7b8c6bf5a0b99b
+    SBOM_NAMESPACE_PREFIX: https://github.com/${{ github.repository }}
+
+jobs:
+    build-sbom:
+        name: Build + SBOM (${{ github.event.inputs.board || 'tl3238x_retention' }})
+        runs-on: ubuntu-latest
+
+        container:
+            # Digest of ghcr.io/project-chip/chip-build-telink:200, the image the
+            # v1.6.1 branch's own examples-telink.yaml uses. Pinned by digest so the
+            # toolchain cannot shift under a build.
+            image: ghcr.io/project-chip/chip-build-telink@sha256:82a785fc06f42a2589415223defd06d1fe6a6ef43148fc3840518b1b23820c9f
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+              with:
+                  # The full history is large; the SBOM only needs the built tree.
+                  fetch-depth: 1
+
+            - name: Checkout submodules & Bootstrap
+              uses: ./.github/actions/checkout-submodules-and-bootstrap
+              with:
+                  platform: telink
+
+            - name: Pin Telink Zephyr to the release revision
+              run: |
+                  scripts/run_in_build_env.sh "python3 scripts/tools/telink/update_zephyr.py $TELINK_ZEPHYR_REV"
+
+            - name: Fetch the matching Telink BLE SDK
+              run: |
+                  bash "$TELINK_ZEPHYR_BASE/../modules/hal/telink/hal_v2/fetch_sdk.sh" "$TELINK_BLE_SDK_URL" "$TELINK_BLE_SDK_REV"
+
+            - name: Build example and generate SPDX SBOM
+              run: |
+                  ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x_retention' }}' '${{ github.event.inputs.app || 'examples/light-switch-app/telink' }}' 'out/telink-build' 'out/sbom'"
+
+            # The Matter stack is built by GN through ExternalProject_Add, so zspdx
+            # (which walks the CMake codemodel) cannot see it. This recovers the real
+            # file list from ninja's own execution log.
+            - name: Generate Matter source SBOM from the GN build
+              run: |
+                  GN_OUT=out/telink-build/modules/chip-module
+                  REV="$(git rev-parse HEAD)"
+                  python3 scripts/tools/telink/gn_sources_to_spdx.py --ninja-log "$GN_OUT/.ninja_log" --compile-db "$GN_OUT/compile_commands.json" --repo-root "$PWD" --out out/sbom/matter-sources.spdx --purl "pkg:github/${GITHUB_REPOSITORY}@$REV" --download-location "git+https://github.com/${GITHUB_REPOSITORY}@$REV" --version "$REV"
+
+            - name: Enrich SBOM for NTIA compliance
+              run: |
+                  python3 scripts/tools/telink/enrich_sbom.py out/sbom
+
+            - name: Convert SBOM to CycloneDX
+              run: |
+                  python3 scripts/tools/telink/spdx_to_cyclonedx.py out/sbom/enriched -o out/sbom/telink-matter.cdx.json
+
+            - name: Generate SBOM review artefacts
+              run: |
+                  python3 scripts/tools/telink/sbom_review.py out/sbom/enriched --out-dir out/sbom/review
+
+            # west spdx only sees what CMake/GN compiled. Prebuilt libraries that
+            # ship inside the SDK (tl_openthread_libs, the BLE SDK binaries) are not
+            # part of that graph, so list them explicitly instead of silently
+            # implying the SBOM is complete.
+            - name: List prebuilt binaries outside the source SBOM
+              if: always()
+              run: |
+                  mkdir -p out/sbom
+                  {
+                    echo "# Prebuilt binaries that are NOT produced by this build."
+                    echo "# west spdx only sees what CMake/GN compiled, so shipped .a/.lib"
+                    echo "# files (e.g. telink-semi/tl_openthread_libs) must be declared"
+                    echo "# separately, via sdk-sbom metadata or a manual entry."
+                    echo
+                    find "$GITHUB_WORKSPACE" -path '*/.git' -prune -o -path '*/out/*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
+                    find "$TELINK_ZEPHYR_BASE/.." -path '*/build*' -prune -o -type f \( -name '*.a' -o -name '*.lib' \) -print 2>/dev/null
+                  } | sort -u > out/sbom/prebuilt-binaries.txt
+                  cat out/sbom/prebuilt-binaries.txt
+
+            - name: Show SBOM summary
+              if: always()
+              run: |
+                  echo "--- SPDX documents ---"
+                  ls -la out/sbom 2>/dev/null || echo "(no SBOM directory produced)"
+                  for dir in out/sbom out/sbom/enriched; do
+                    [ -d "$dir" ] || continue
+                    echo "--- $dir ---"
+                    printf '%-24s %8s %8s %8s\n' document packages supplier purl
+                    for f in "$dir"/*.spdx; do
+                      [ -e "$f" ] || continue
+                      printf '%-24s %8s %8s %8s\n' "$(basename "$f")" "$(grep -c '^PackageName:' "$f" || true)" "$(grep -c '^PackageSupplier:' "$f" || true)" "$(grep -c '^ExternalRef:.*purl' "$f" || true)"
+                    done
+                  done
+
+            - name: Upload firmware
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-firmware
+                  if-no-files-found: warn
+                  path: |
+                      out/telink-build/zephyr/zephyr.elf
+                      out/telink-build/zephyr/zephyr.bin
+                      out/telink-build/zephyr/zephyr.map
+
+            - name: Upload SBOM (raw, as emitted by zspdx)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-spdx-raw
+                  if-no-files-found: warn
+                  path: out/sbom/*.spdx
+
+            - name: Upload SBOM (enriched, NTIA-complete)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-spdx-enriched
+                  if-no-files-found: warn
+                  path: out/sbom/enriched/*.spdx
+
+            - name: Upload SBOM (CycloneDX)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-cyclonedx
+                  if-no-files-found: warn
+                  path: out/sbom/*.cdx.json
+
+            - name: Upload SBOM review artefacts
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-review
+                  if-no-files-found: warn
+                  path: |
+                      out/sbom/review/sbom-review.csv
+                      out/sbom/review/sbom-gaps.md
+                      out/sbom/prebuilt-binaries.txt
