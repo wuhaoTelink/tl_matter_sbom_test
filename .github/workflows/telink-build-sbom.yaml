@@ -115,6 +115,34 @@ jobs:
               run: |
                   python3 scripts/tools/telink/spdx_to_cyclonedx.py out/sbom/enriched -o out/sbom/telink-matter.cdx.json
 
+            # Trivy matches the SBOM purls against its vulnerability databases.
+            # Most components here are source repositories (pkg:github/...),
+            # which no advisory database indexes by name, so hits are expected
+            # to be sparse; the scan still runs on every build so a real match
+            # is never missed silently. Report-only: it does not gate the job.
+            - name: Scan SBOM for vulnerabilities
+              if: always()
+              shell: bash
+              run: |
+                  if [ ! -s out/sbom/telink-matter.cdx.json ]; then
+                    echo "no CycloneDX document; skipping vulnerability scan"
+                    exit 0
+                  fi
+                  V=0.58.1
+                  if ! curl -sSL "https://github.com/aquasecurity/trivy/releases/download/v${V}/trivy_${V}_Linux-64bit.tar.gz" -o /tmp/trivy.tgz; then
+                    echo "could not download trivy; skipping the vulnerability scan"
+                    exit 0
+                  fi
+                  if ! tar -xzf /tmp/trivy.tgz -C /tmp trivy; then
+                    echo "trivy archive unusable; skipping the vulnerability scan"
+                    exit 0
+                  fi
+                  /tmp/trivy --version
+                  /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --severity HIGH,CRITICAL --format json --output out/sbom/trivy-sbom.json || true
+                  /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --format table --output out/sbom/trivy-sbom.txt || true
+                  echo "--- trivy (HIGH/CRITICAL) ---"
+                  sed -n '1,40p' out/sbom/trivy-sbom.txt 2>/dev/null || true
+
             - name: Generate SBOM review artefacts
               run: |
                   python3 scripts/tools/telink/sbom_review.py out/sbom/enriched --out-dir out/sbom/review
@@ -144,6 +172,14 @@ jobs:
                     done < /tmp/all-archives.txt
                   } | sort -u > out/sbom/prebuilt-binaries.txt
                   cat out/sbom/prebuilt-binaries.txt
+
+            # One directory that can be handed to the SDK delivery pipeline:
+            # firmware + SBOM + prebuilt list + vulnerability report, with a
+            # manifest and checksums so it can be archived and diffed.
+            - name: Assemble delivery bundle
+              if: always()
+              run: |
+                  python3 scripts/tools/telink/make_delivery.py --out-dir out/delivery --zip out/telink-sbom-delivery.zip
 
             - name: Show SBOM summary
               if: always()
@@ -205,3 +241,13 @@ jobs:
                       out/sbom/review/sbom-review.csv
                       out/sbom/review/sbom-gaps.md
                       out/sbom/prebuilt-binaries.txt
+                      out/sbom/trivy-sbom.json
+                      out/sbom/trivy-sbom.txt
+
+            - name: Upload delivery bundle
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-delivery
+                  if-no-files-found: warn
+                  path: out/telink-sbom-delivery.zip
