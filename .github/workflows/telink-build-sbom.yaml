@@ -47,6 +47,9 @@ concurrency:
 env:
     CHIP_NO_LOG_TIMESTAMPS: true
     TELINK_ZEPHYR_REV: 80de0ea4045869967c6b8e3d86b761955b1c981b
+    # Pin the scanner; the asset name embeds the version, so an outdated pin
+    # silently 404s and the step skips itself.
+    TRIVY_VERSION: 0.76.2
     # tl_ble_sdk is pinned by tl_zephyr west.yml (f50d422d780efb73af939650ef7b8c6bf5a0b99b)
     # SPDX wants a namespace that is unique per document version; putting the
     # commit in the path keeps two builds of different revisions apart while
@@ -128,15 +131,18 @@ jobs:
                     echo "no CycloneDX document; skipping vulnerability scan"
                     exit 0
                   fi
-                  V=0.58.1
-                  if ! curl -sSL "https://github.com/aquasecurity/trivy/releases/download/v${V}/trivy_${V}_Linux-64bit.tar.gz" -o /tmp/trivy.tgz; then
-                    echo "could not download trivy; skipping the vulnerability scan"
+                  V="${TRIVY_VERSION}"
+                  URL="https://github.com/aquasecurity/trivy/releases/download/v${V}/trivy_${V}_Linux-64bit.tar.gz"
+                  echo "downloading $URL"
+                  if ! curl -fsSL "$URL" -o /tmp/trivy.tgz; then
+                    echo "could not download trivy $V; skipping the vulnerability scan"
                     exit 0
                   fi
-                  if ! tar -xzf /tmp/trivy.tgz -C /tmp trivy; then
-                    echo "trivy archive unusable; skipping the vulnerability scan"
+                  if ! tar -tzf /tmp/trivy.tgz >/dev/null 2>&1; then
+                    echo "trivy archive for $V is not a valid tarball (bad version?); skipping"
                     exit 0
                   fi
+                  tar -xzf /tmp/trivy.tgz -C /tmp trivy
                   /tmp/trivy --version
                   /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --severity HIGH,CRITICAL --format json --output out/sbom/trivy-sbom.json || true
                   /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --format table --output out/sbom/trivy-sbom.txt || true
