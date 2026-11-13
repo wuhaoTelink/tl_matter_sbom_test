@@ -173,7 +173,11 @@ def main():
                            {"type": "website",
                             "url": "https://docs.zephyrproject.org/latest/develop/west/zephyr-cmds.html"}]}],
             "component": {
-                "type": "firmware",
+                # CycloneDX 1.6 has a "firmware" type, but Trivy's decoder does
+                # not accept it and rejects the whole document ("unsupported
+                # type"). "application" is the closest type every consumer
+                # understands, so the document stays scannable.
+                "type": "application",
                 "bom-ref": root_ref,
                 "name": args.product_name,
                 "version": args.product_version,
