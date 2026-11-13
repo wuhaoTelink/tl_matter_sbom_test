@@ -187,6 +187,18 @@ jobs:
               run: |
                   python3 scripts/tools/telink/make_delivery.py --out-dir out/delivery --zip out/telink-sbom-delivery.zip
 
+            # A few KB, so the bundle can be verified without downloading the
+            # 30 MB zip: compare these hashes against what you received.
+            - name: Upload delivery manifest
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-manifest
+                  if-no-files-found: warn
+                  path: |
+                      out/delivery/MANIFEST.json
+                      out/delivery/SHA256SUMS
+
             - name: Show SBOM summary
               if: always()
               run: |
