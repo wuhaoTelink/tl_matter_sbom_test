@@ -14,7 +14,7 @@
 #
 # Build one Telink Matter example and emit an SPDX / CycloneDX SBOM.
 #
-# Baseline: SDK v1.1.0.0 (see Matter_Zigbee_Dual_Mode_SDK_Release_Info.pdf, section 2):
+# Example baseline -- replace these with the values from your own release note:
 #   Matter : telink-semi/tl_matter  dev-tl3238x_prj_v1.6.1  23123f5786f7917427b5b1e985a28b29125bf1db
 #   Zephyr : telink-semi/tl_zephyr  dev-tl3238x_prj_v4.1    80de0ea4045869967c6b8e3d86b761955b1c981b
 #   BLE SDK: telink-semi/tl_ble_sdk_zephyr                  f50d422d780efb73af939650ef7b8c6bf5a0b99b
@@ -28,16 +28,16 @@ on:
     workflow_dispatch:
         inputs:
             board:
-                description: "Zephyr board target"
+                description: "Zephyr board target (example value; adjust to your board)"
                 required: true
-                default: tl3238x_retention
+                default: tl3238x
             app:
                 description: "Example source dir (relative to repo root)"
                 required: true
-                default: examples/light-switch-app/telink
+                default: examples/lighting-app/telink
     push:
         branches:
-            - dev-tl3238x_prj_v1.6.1
+            # Replace with the branch you actually push to; ci/** works out of the box.
             - 'ci/**'
 
 concurrency:
@@ -58,7 +58,7 @@ env:
 
 jobs:
     build-sbom:
-        name: Build + SBOM (${{ github.event.inputs.board || 'tl3238x_retention' }})
+        name: Build + SBOM (${{ github.event.inputs.board || 'tl3238x' }})
         runs-on: ubuntu-latest
 
         container:
@@ -90,7 +90,7 @@ jobs:
 
             - name: Build example and generate SPDX SBOM
               run: |
-                  ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x_retention' }}' '${{ github.event.inputs.app || 'examples/light-switch-app/telink' }}' 'out/telink-build' 'out/sbom'"
+                  ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x' }}' '${{ github.event.inputs.app || 'examples/lighting-app/telink' }}' 'out/telink-build' 'out/sbom'"
 
             # The Matter stack is built by GN through ExternalProject_Add, so zspdx
             # (which walks the CMake codemodel) cannot see it. This recovers the real
@@ -196,8 +196,9 @@ jobs:
                   name: telink-sbom-manifest
                   if-no-files-found: warn
                   path: |
-                      out/delivery/MANIFEST.json
+                      out/delivery/manifest.json
                       out/delivery/SHA256SUMS
+                      out/delivery/LICENSES/index.json
 
             - name: Show SBOM summary
               if: always()
