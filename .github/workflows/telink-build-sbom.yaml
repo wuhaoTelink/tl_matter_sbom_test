@@ -28,9 +28,12 @@ on:
     workflow_dispatch:
         inputs:
             board:
+                # The plain tl3238x flash map is ~684 KB, which is too small for
+                # a Matter image; the retention variant carries the 2 MB map.
+                # Replace with the board from your own release configuration.
                 description: "Zephyr board target (example value; adjust to your board)"
                 required: true
-                default: tl3238x
+                default: tl3238x_retention
             app:
                 description: "Example source dir (relative to repo root)"
                 required: true
@@ -58,7 +61,7 @@ env:
 
 jobs:
     build-sbom:
-        name: Build + SBOM (${{ github.event.inputs.board || 'tl3238x' }})
+        name: Build + SBOM (${{ github.event.inputs.board || 'tl3238x_retention' }})
         runs-on: ubuntu-latest
 
         container:
@@ -90,7 +93,7 @@ jobs:
 
             - name: Build example and generate SPDX SBOM
               run: |
-                  ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x' }}' '${{ github.event.inputs.app || 'examples/lighting-app/telink' }}' 'out/telink-build' 'out/sbom'"
+                  ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x_retention' }}' '${{ github.event.inputs.app || 'examples/lighting-app/telink' }}' 'out/telink-build' 'out/sbom'"
 
             # The Matter stack is built by GN through ExternalProject_Add, so zspdx
             # (which walks the CMake codemodel) cannot see it. This recovers the real
