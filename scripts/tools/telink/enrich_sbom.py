@@ -22,6 +22,7 @@ accurate about *files* but leave three NTIA-required package fields empty:
   PackageSupplier          -- never emitted at all
   PackageLicenseDeclared   -- always NOASSERTION
   ExternalRef (purl)       -- emitted for one package out of 142
+  ExternalRef (CPE)        -- only for modules whose own metadata declares one
 
 This script fills those in, and is deliberately conservative about what it
 asserts:
@@ -30,7 +31,14 @@ asserts:
   * PackageSupplier is the repository owner for anything with a VCS location;
     for build-internal CMake targets (which have no upstream) it falls back to
     --default-supplier. That fallback is an *assertion by the SBOM producer*,
-    not metadata from upstream -- see --default-supplier.
+    not metadata from upstream -- see --default-supplier. The value always
+    carries the SPDX-required `Organization: ` prefix; without one a strict
+    decoder rejects the entire document (see check_typed_suppliers).
+  * ExternalRef (CPE) comes from module_cpes.json, a maintained map of the
+    modules whose upstream repository declares no CPE of its own. An entry is
+    applied only while the package still sits at the revision that entry was
+    verified against, so bumping a module pin stops the CPE rather than
+    asserting a stale version.
   * PackageLicenseDeclared is taken from PackageLicenseConcluded when zspdx
     already computed one (it handles OR expressions correctly), otherwise
     aggregated from the package's file-level LicenseInfoInFile entries. If the
@@ -70,6 +78,68 @@ _STATE_SUFFIXES = ("-off", "-dirty")
 # license text instead, so their files all come back NONE).
 DEFAULT_LICENSE_MAP = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    "module_licenses.json")
+
+# CPE answers for the modules whose own repository declares none, maintained the
+# same way and for the same reason. See that file for the per-entry evidence and
+# for why most of the components cannot have a CPE at all.
+DEFAULT_CPE_MAP = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "module_cpes.json")
+
+# SPDX 2.3: PackageSupplier is [Person: | Organization: | NOASSERTION] <value>.
+_TYPED_PREFIXES = ("Person:", "Organization:", "NOASSERTION")
+
+
+def typed_supplier(name):
+    """Return an SPDX-valid PackageSupplier value for a bare name."""
+    name = (name or "").strip()
+    if name.startswith(_TYPED_PREFIXES):
+        return name  # already typed, e.g. --default-supplier "Person: someone"
+    return f"Organization: {name}"
+
+
+def load_cpe_map(path):
+    """Return {org/repo: entry} from the maintained CPE map."""
+    if not path or not os.path.exists(path):
+        print(f"WARNING: CPE map {path!r} not found; no CPEs will be added "
+              f"beyond the ones upstream metadata declares", file=sys.stderr)
+        return {}
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    valid = {}
+    for key, entry in (data.get("cpes") or {}).items():
+        # Without a revision there is nothing to check the entry against, so it
+        # would assert a version for whatever commit happens to be pinned next.
+        if not isinstance(entry, dict) or not entry.get("cpe") or not entry.get("revision"):
+            print(f"WARNING: ignoring CPE map entry {key!r}: needs both "
+                  f"'cpe' and 'revision'", file=sys.stderr)
+            continue
+        valid[key] = entry
+    return valid
+
+
+def module_cpe(lines, version, cpe_map, skipped):
+    """Return a CPE for one package, or None to leave it alone.
+
+    Never invents one: a CPE is added only for a repository the map names, and
+    only while the package still sits at the revision the entry was verified
+    against. Anything else is skipped and reported.
+    """
+    if any(l.startswith("ExternalRef: SECURITY") for l in lines):
+        return None  # upstream declared one; never duplicate it
+    dl = field(lines, "PackageDownloadLocation") or ""
+    org, repo = repo_for(lines, dl)
+    if not org:
+        return None
+    key = f"{org}/{repo}"
+    entry = cpe_map.get(key)
+    if not entry:
+        return None
+    rev = strip_state(version or "")
+    if rev != entry["revision"]:
+        skipped.append(f"{key}: pinned at {rev[:12] or '(no version)'}, "
+                       f"map was verified at {entry['revision'][:12]}")
+        return None
+    return entry["cpe"]
 
 
 def load_license_map(path):
@@ -216,7 +286,7 @@ def package_license_declared(lines, download_location, license_map):
     return license_map.get(f"{org}/{repo}")
 
 
-def enrich_block(lines, default_supplier, license_map):
+def enrich_block(lines, default_supplier, license_map, cpe_map=None, skipped=None):
     """Return new lines for one Package block with the missing fields filled."""
     name = field(lines, "PackageName") or "<unnamed>"
     version = field(lines, "PackageVersion") or ""
@@ -225,9 +295,19 @@ def enrich_block(lines, default_supplier, license_map):
     additions = {}  # field -> value, inserted after the block's leading fields
 
     # --- PackageSupplier -------------------------------------------------
+    #
+    # SPDX 2.3 defines this field as
+    #     PackageSupplier: [Person: | Organization: | NOASSERTION] <value>
+    # and a bare name is a spec violation, not a cosmetic one: strict decoders
+    # reject the *whole document* over a single bad field. Syft (and therefore
+    # Grype) refuses to read the SBOM at all with
+    #     invalid subvalue format for <name> (no colon found)
+    # so every package loses its CPE and every scan reports zero findings.
+    # Found by scanning a real build artifact; a fixture written from the spec
+    # already has the correct form and cannot expose this.
     if field(lines, "PackageSupplier") is None:
         org, _ = repo_for(lines, dl)
-        additions["PackageSupplier"] = org if org else default_supplier
+        additions["PackageSupplier"] = typed_supplier(org or default_supplier)
 
     # --- PackageLicenseDeclared -----------------------------------------
     if field(lines, "PackageLicenseDeclared") == "NOASSERTION":
@@ -240,6 +320,14 @@ def enrich_block(lines, default_supplier, license_map):
         purl = derive_purl(dl, version)
         if purl:
             additions["ExternalRef"] = f"PACKAGE_MANAGER purl {purl}"
+
+    # --- ExternalRef: CPE -----------------------------------------------
+    # Unlocks vulnerability matching: the purl points at a source repository
+    # that no advisory database indexes, so a scanner with only the purl here
+    # reports nothing at all.
+    cpe = module_cpe(lines, version, cpe_map or {}, skipped if skipped is not None else [])
+    if cpe:
+        additions["ExternalRefCpe"] = f"SECURITY cpe23Type {cpe}"
 
     if not additions:
         return lines, []
@@ -263,26 +351,31 @@ def enrich_block(lines, default_supplier, license_map):
                 out.append(f"PackageSupplier: {additions['PackageSupplier']}\n")
                 inserted.add("PackageSupplier")
 
-        # Insert purl after DownloadLocation so the VCS fields stay together.
-        if "ExternalRef" in additions and key == "PackageDownloadLocation":
-            out.append(f"ExternalRef: {additions['ExternalRef']}\n")
-            inserted.add("ExternalRef")
+        # Insert the external refs after DownloadLocation so the VCS fields
+        # stay together.
+        if key == "PackageDownloadLocation":
+            for ref in ("ExternalRef", "ExternalRefCpe"):
+                if ref in additions and ref not in inserted:
+                    out.append(f"ExternalRef: {additions[ref]}\n")
+                    inserted.add(ref)
 
     # Fallbacks if the anchor fields were absent.
     if "PackageSupplier" in additions and "PackageSupplier" not in inserted:
         out.insert(1, f"PackageSupplier: {additions['PackageSupplier']}\n")
-    if "ExternalRef" in additions and "ExternalRef" not in inserted:
-        out.append(f"ExternalRef: {additions['ExternalRef']}\n")
+    for ref in ("ExternalRef", "ExternalRefCpe"):
+        if ref in additions and ref not in inserted:
+            out.append(f"ExternalRef: {additions[ref]}\n")
 
     return out, sorted(additions)
 
 
-def process_document(text, default_supplier, license_map):
+def process_document(text, default_supplier, license_map, cpe_map=None, skipped=None):
     header, blocks = split_blocks(text)
     out = [header]
-    stats = {"packages": 0, "supplier": 0, "license": 0, "purl": 0}
+    stats = {"packages": 0, "supplier": 0, "license": 0, "purl": 0, "cpe": 0}
     for name, lines in blocks:
-        new_lines, added = enrich_block(lines, default_supplier, license_map)
+        new_lines, added = enrich_block(lines, default_supplier, license_map,
+                                       cpe_map, skipped)
         out.append(f"##### Package: {name}\n")
         out.extend(new_lines)
         stats["packages"] += 1
@@ -292,7 +385,37 @@ def process_document(text, default_supplier, license_map):
             stats["license"] += 1
         if "ExternalRef" in added:
             stats["purl"] += 1
+        if "ExternalRefCpe" in added:
+            stats["cpe"] += 1
     return "".join(out), stats
+
+
+def check_typed_suppliers(dst):
+    """Refuse to ship a document that a strict decoder cannot read.
+
+    One untyped PackageSupplier anywhere makes Syft reject the entire document,
+    and at the far end that surfaces as "no vulnerabilities found" rather than
+    as an error -- the failure mode that hides work instead of reporting it.
+    Cheaper to stop the build here.
+    """
+    bad = []
+    for name in sorted(os.listdir(dst)):
+        if not name.endswith(".spdx"):
+            continue
+        with open(os.path.join(dst, name), encoding="utf-8") as f:
+            for n, line in enumerate(f, 1):
+                if not line.startswith("PackageSupplier:"):
+                    continue
+                value = line.split(":", 1)[1].strip()
+                if not value.startswith(_TYPED_PREFIXES):
+                    bad.append(f"{name}:{n}: PackageSupplier: {value}")
+    if bad:
+        for b in bad[:10]:
+            print(f"  {b}", file=sys.stderr)
+        sys.exit(f"ERROR: {len(bad)} PackageSupplier value(s) without a "
+                 f"Person:/Organization: prefix; SPDX decoders reject the whole "
+                 f"document, and every scan of it then reports nothing")
+    print("PackageSupplier: every value carries a typed prefix")
 
 
 def main():
@@ -308,11 +431,18 @@ def main():
     ap.add_argument("--license-map", default=DEFAULT_LICENSE_MAP,
                     help="team-maintained JSON of confirmed component licenses "
                          "(default: %(default)s)")
+    ap.add_argument("--cpe-map", default=DEFAULT_CPE_MAP,
+                    help="team-maintained JSON of CPEs for modules whose "
+                         "upstream declares none (default: %(default)s)")
     args = ap.parse_args()
 
     license_map = load_license_map(args.license_map)
     print(f"license map: {len(license_map)} confirmed entr"
           f"{'y' if len(license_map) == 1 else 'ies'} from {args.license_map}")
+
+    cpe_map = load_cpe_map(args.cpe_map)
+    print(f"CPE map: {len(cpe_map)} entr"
+          f"{'y' if len(cpe_map) == 1 else 'ies'} from {args.cpe_map}")
 
     src = args.sbom_dir
     docs = sorted(f for f in os.listdir(src) if f.endswith(".spdx"))
@@ -325,24 +455,32 @@ def main():
         dst = os.path.join(src, "enriched")
         os.makedirs(dst, exist_ok=True)
 
-    totals = {"packages": 0, "supplier": 0, "license": 0, "purl": 0}
+    totals = {"packages": 0, "supplier": 0, "license": 0, "purl": 0, "cpe": 0}
+    skipped = []
     for doc in docs:
         with open(os.path.join(src, doc), encoding="utf-8") as f:
             text = f.read()
-        new_text, stats = process_document(text, args.default_supplier, license_map)
+        new_text, stats = process_document(text, args.default_supplier, license_map,
+                                          cpe_map, skipped)
         with open(os.path.join(dst, doc), "w", encoding="utf-8", newline="\n") as f:
             f.write(new_text)
         print(f"{doc:22} {stats['packages']:4d} pkg | "
               f"+{stats['supplier']:4d} supplier  +{stats['license']:4d} license  "
-              f"+{stats['purl']:4d} purl")
+              f"+{stats['purl']:4d} purl  +{stats['cpe']:4d} cpe")
         for k in totals:
             totals[k] += stats[k]
 
     print(f"{'TOTAL':22} {totals['packages']:4d} pkg | "
           f"+{totals['supplier']:4d} supplier  +{totals['license']:4d} license  "
-          f"+{totals['purl']:4d} purl")
+          f"+{totals['purl']:4d} purl  +{totals['cpe']:4d} cpe")
+
+    # A mapped module that moved off its verified revision is not an error, but
+    # it is the one thing that silently costs CVE coverage, so say it out loud.
+    for reason in skipped:
+        print(f"CPE map skip (revision moved): {reason}")
 
     update_external_refs(dst)
+    check_typed_suppliers(dst)
     print(f"\nwritten to: {dst}")
 
 

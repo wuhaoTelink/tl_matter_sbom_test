@@ -51,9 +51,6 @@ concurrency:
 env:
     CHIP_NO_LOG_TIMESTAMPS: true
     TELINK_ZEPHYR_REV: 80de0ea4045869967c6b8e3d86b761955b1c981b
-    # Pin the scanner; the asset name embeds the version, so an outdated pin
-    # silently 404s and the step skips itself.
-    TRIVY_VERSION: 0.76.2
     # tl_ble_sdk is pinned by tl_zephyr west.yml (f50d422d780efb73af939650ef7b8c6bf5a0b99b)
     # SPDX wants a namespace that is unique per document version; putting the
     # commit in the path keeps two builds of different revisions apart while
@@ -122,36 +119,69 @@ jobs:
               run: |
                   python3 scripts/tools/telink/spdx_to_cyclonedx.py out/sbom/enriched -o out/sbom/telink-matter.cdx.json
 
-            # Trivy matches the SBOM purls against its vulnerability databases.
-            # Most components here are source repositories (pkg:github/...),
-            # which no advisory database indexes by name, so hits are expected
-            # to be sparse; the scan still runs on every build so a real match
-            # is never missed silently. Report-only: it does not gate the job.
+            # Grype, not Trivy. Trivy's SPDX decoder reads only purl
+            # (parseExternalReferences filters on RefTypePurl and skips every
+            # other reference type), so it cannot see the CPE that this pipeline
+            # relies on to match anything at all -- every component here is
+            # pkg:github/<org>/<repo>@<commit>, which no ecosystem index holds.
+            # Grype reads CPEs through Syft's extractCPEs().
+            #
+            # Measured on one real build: before the CPE map in module_cpes.json,
+            # 16 CVEs on one component; after, 25 across three.
+            #
+            # Only the component-bearing documents are scanned. build.spdx holds
+            # CMake build targets -- `debug`, `kernel`, `offsets` -- with no
+            # version, no purl and no CPE, and Grype matches them by name against
+            # unrelated packages in other ecosystems; `debug` produced three
+            # false positives against the npm package of that name.
+            #
+            # Report-only: the findings need triage before this can gate a build.
             - name: Scan SBOM for vulnerabilities
               if: always()
               shell: bash
               run: |
-                  if [ ! -s out/sbom/telink-matter.cdx.json ]; then
-                    echo "no CycloneDX document; skipping vulnerability scan"
+                  if ! command -v curl >/dev/null 2>&1; then
+                    echo "no curl; skipping the vulnerability scan"
                     exit 0
                   fi
-                  V="${TRIVY_VERSION}"
-                  URL="https://github.com/aquasecurity/trivy/releases/download/v${V}/trivy_${V}_Linux-64bit.tar.gz"
-                  echo "downloading $URL"
-                  if ! curl -fsSL "$URL" -o /tmp/trivy.tgz; then
-                    echo "could not download trivy $V; skipping the vulnerability scan"
+                  if ! curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+                       | sh -s -- -b /usr/local/bin; then
+                    echo "could not install grype; skipping the vulnerability scan"
                     exit 0
                   fi
-                  if ! tar -tzf /tmp/trivy.tgz >/dev/null 2>&1; then
-                    echo "trivy archive for $V is not a valid tarball (bad version?); skipping"
+                  grype version
+                  mkdir -p out/sbom/vuln
+                  for doc in app zephyr modules-deps matter-sources; do
+                    f="out/sbom/enriched/$doc.spdx"
+                    [ -e "$f" ] || continue
+                    grype "sbom:$f" -o table > "out/sbom/vuln/$doc.txt" 2>&1 || true
+                  done
+                  # No report at all is the one outcome that must not look like
+                  # a clean scan, so say it in the log rather than let the glob
+                  # below fail quietly and print nothing.
+                  if ! ls out/sbom/vuln/*.txt >/dev/null 2>&1; then
+                    echo "no vulnerability report was produced; check the documents exist"
                     exit 0
                   fi
-                  tar -xzf /tmp/trivy.tgz -C /tmp trivy
-                  /tmp/trivy --version
-                  /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --severity HIGH,CRITICAL --format json --output out/sbom/trivy-sbom.json || true
-                  /tmp/trivy sbom out/sbom/telink-matter.cdx.json --scanners vuln --format table --output out/sbom/trivy-sbom.txt || true
-                  echo "--- trivy (HIGH/CRITICAL) ---"
-                  sed -n '1,40p' out/sbom/trivy-sbom.txt 2>/dev/null || true
+                  echo "--- findings by document ---"
+                  # Count vulnerability IDs, not table columns. The table is
+                  # name | installed | fixed-in | type | vulnerability | severity,
+                  # so severity is the sixth column and any positional match is
+                  # fragile -- an earlier version counted zero rows for a
+                  # document that actually held 16 findings.
+                  for f in out/sbom/vuln/*.txt; do
+                    n=$(grep -cE '(CVE-[0-9]{4}-[0-9]{4,}|GHSA-[a-z0-9-]+)' "$f" || true)
+                    printf '   %-24s %s findings\n' "$(basename "$f")" "$n"
+                  done
+                  echo
+                  echo "--- severity breakdown ---"
+                  for s in Critical High Medium Low Negligible; do
+                    n=$(cat out/sbom/vuln/*.txt 2>/dev/null | grep -cE "(CVE-[0-9]{4}-[0-9]{4,}|GHSA-[a-z0-9-]+) +$s" || true)
+                    printf '   %-12s %s\n' "$s" "$n"
+                  done
+                  echo
+                  echo "--- detail ---"
+                  cat out/sbom/vuln/*.txt
 
             - name: Generate SBOM review artefacts
               run: |
@@ -264,8 +294,14 @@ jobs:
                       out/sbom/review/sbom-review.csv
                       out/sbom/review/sbom-gaps.md
                       out/sbom/prebuilt-binaries.txt
-                      out/sbom/trivy-sbom.json
-                      out/sbom/trivy-sbom.txt
+
+            - name: Upload vulnerability report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: telink-sbom-vuln
+                  if-no-files-found: warn
+                  path: out/sbom/vuln/*.txt
 
             - name: Upload delivery bundle
               if: always()

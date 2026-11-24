@@ -18,8 +18,13 @@
 
 Many commercial SCA platforms (Dependency-Track, and most customer-side
 tooling) ingest CycloneDX but not SPDX tag-value. This reads the *enriched*
-SPDX documents produced by enrich_sbom.py -- it needs the purl and supplier
-fields that script adds -- and emits one CycloneDX 1.6 document.
+SPDX documents produced by enrich_sbom.py -- it needs the purl, supplier and
+CPE fields that script adds -- and emits one CycloneDX 1.6 document.
+
+The CPE is carried through to the CycloneDX component's "cpe" field. It is the
+only identifier in this SBOM that a vulnerability database can resolve: a purl
+pointing at pkg:github/<org>/<repo>@<commit> is in no ecosystem index, so a
+consumer that gets only the purl will report no findings at all.
 
 Scope: by default only packages that carry a purl are emitted as components.
 Those are the real third-party components (the Zephyr modules and the Matter
@@ -79,6 +84,9 @@ def parse_packages(text):
                 pkg["concluded"] = line.split(":", 1)[1].strip()
             elif line.startswith("ExternalRef: PACKAGE_MANAGER purl"):
                 pkg["purl"] = line.split()[-1]
+            elif line.startswith("ExternalRef: SECURITY"):
+                # "ExternalRef: SECURITY cpe23Type cpe:2.3:..."
+                pkg["cpe"] = line.split()[-1]
             elif line.startswith("FileName:"):
                 break  # file entries follow; not needed here
         yield pkg
@@ -114,10 +122,19 @@ def to_component(ref, pkg):
     }
     if pkg.get("version"):
         comp["version"] = strip_state(pkg["version"])
-    if pkg.get("supplier") and pkg["supplier"] != "NOASSERTION":
-        comp["supplier"] = {"name": pkg["supplier"]}
+    supplier = pkg.get("supplier")
+    if supplier and supplier != "NOASSERTION":
+        # SPDX types this field ("Organization: X"); CycloneDX has a plain name
+        # field, so the prefix is dropped rather than shipped to the customer.
+        for prefix in ("Person:", "Organization:"):
+            if supplier.startswith(prefix):
+                supplier = supplier[len(prefix):].strip()
+                break
+        comp["supplier"] = {"name": supplier}
     if ref.startswith("pkg:"):
         comp["purl"] = ref
+    if pkg.get("cpe"):
+        comp["cpe"] = pkg["cpe"]
     if pkg.get("license"):
         comp["licenses"] = [pkg["license"]]
     return comp

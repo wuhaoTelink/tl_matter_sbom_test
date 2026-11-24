@@ -1,0 +1,71 @@
+{
+  "_comment": [
+    "CPE answers for the components whose own repository declares no CPE.",
+    "",
+    "zspdx copies whatever a module puts under 'security.external-references' in",
+    "its zephyr/module.yml into the SBOM as an ExternalRef. Exactly one module in",
+    "this build declares one -- mbedtls, which ships",
+    "cpe:2.3:a:arm:mbed_tls:3.6.2 -- so a scan of a stock build can only ever",
+    "match mbedtls. Every other component arrives as",
+    "pkg:github/<org>/<repo>@<commit>, which no advisory database indexes, and is",
+    "therefore invisible to vulnerability scanning.",
+    "",
+    "This file is the human answer for the rest. It is read by enrich_sbom.py and",
+    "is meant to be edited by the team, not generated. Keys are 'org/repo'",
+    "exactly as they appear in the SPDX PackageDownloadLocation.",
+    "",
+    "'revision' is the module revision the entry was verified against. The CPE is",
+    "applied only while the SBOM still records that revision, so bumping a pin",
+    "disables the entry rather than asserting a version for a commit nobody",
+    "checked. When that happens enrich_sbom.py prints a 'CPE map skip' line --",
+    "grep the build log for it after any dependency bump.",
+    "",
+    "Only add an entry you can justify twice:",
+    "  1. the version comes from the pinned source itself, and",
+    "  2. a scanner or the NVD API actually matches that CPE to CVEs.",
+    "The 'evidence' field is where that gets written down.",
+    "",
+    "A wrong entry is worse than no entry: it attributes another product's CVEs",
+    "to this firmware, or masks the real ones. Most components here have no",
+    "usable CPE at all, and 'not_covered' records what was tried, so the next",
+    "person does not repeat the investigation."
+  ],
+
+  "cpes": {
+    "zephyrproject-rtos/fatfs": {
+      "cpe": "cpe:2.3:a:elm-chan:fatfs:r0.15a:*:*:*:*:*:*:*",
+      "revision": "16245c7c41d2b79e74984f49b5202551786b8a9b",
+      "version_source": "include/ff.h in the pinned revision: 'FatFs - Generic FAT Filesystem module R0.15a' (FF_DEFINED 5380)",
+      "evidence": "Grype 0.122.0 matches 6 CVEs against this CPE: CVE-2026-6682, -6683, -6684, -6686, -6687, -6688. The NVD API returns the same 6 for the product, and all 6 CVEs NVD holds for it carry the elm-chan:fatfs CPE."
+    },
+    "telink-semi/xz": {
+      "cpe": "cpe:2.3:a:tukaani:xz:5.5.0:*:*:*:*:*:*:*",
+      "revision": "831f338fd6784661d3bec62fd01060ee4d7d373d",
+      "version_source": "src/liblzma/api/lzma/version.h in the pinned revision: LZMA_VERSION 5.5.0, stability ALPHA -- a development snapshot between the 5.4 and 5.6 releases, not a published tarball",
+      "evidence": "Grype 0.122.0 matches 3 CVEs against this CPE: CVE-2025-31115, CVE-2024-47611, CVE-2026-34743. The repository is a fork of tukaani-project/xz (its homepage is tukaani.org/xz), so the upstream product identity is not in doubt even though the fork is Telink's."
+    }
+  },
+
+  "not_covered": {
+    "zephyrproject-rtos/mbedtls": "Covered upstream: the module's own zephyr/module.yml declares cpe:2.3:a:arm:mbed_tls:3.6.2, which zspdx copies on to mbedtls-deps. Adding it here as well would report the same CVEs twice.",
+    "zephyrproject-rtos/openthread": "No CPE in NVD belongs to the library. Of the CVEs whose text mentions openthread, the CPEs are openthread:wpantund (a different tool), google:nest_wifi_point_firmware and oracle:database_server. Probed cpe:2.3:a:google:openthread:1.0.0 through Grype: zero matches.",
+    "zephyrproject-rtos/mcuboot": "No CPE: NVD holds 12 CVEs mentioning mcuboot and not one of them carries a cpeMatch.",
+    "zephyrproject-rtos/littlefs": "No CPE of its own; CVEs mentioning littlefs are attributed to zephyrproject:zephyr or to an unrelated Windows archiver.",
+    "zephyrproject-rtos/lvgl": "No CPE in the NVD dictionary -- a keyword search returns no non-deprecated product.",
+    "zephyrproject-rtos/zcbor": "No CPE and no CVEs.",
+    "zephyrproject-rtos/liblc3": "No CPE and no CVEs.",
+    "zephyrproject-rtos/picolibc": "No CPE and no CVEs.",
+    "zephyrproject-rtos/tinycrypt": "No CPE; the single CVE that mentions tinycrypt carries no cpeMatch.",
+    "zephyrproject-rtos/tflite-micro": "The only nearby CPE is google:tensorflow, which is TensorFlow proper rather than TFLite Micro. Mapping it would import unrelated CVEs.",
+    "zephyrproject-rtos/mipi-sys-t": "No CPE in the NVD dictionary.",
+    "zephyrproject-rtos/percepio": "No CPE; TraceRecorder is commercial and absent from NVD.",
+    "zephyrproject-rtos/segger": "No CPE; SEGGER RTT is absent from NVD.",
+    "telink-semi/hal_telink": "Telink's own HAL: no upstream product, therefore no CPE.",
+    "telink-semi/openthread_telink_lib": "Telink fork of OpenThread, and inherits the problem above.",
+    "telink-semi/nfc_st25dv": "Telink component: no upstream product.",
+    "telink-semi/tl_st25dv": "Telink component: no upstream product.",
+    "telink-semi/tflite-micro-telink": "Telink fork of TFLite Micro; same problem as tflite-micro above.",
+    "zephyrproject-rtos/zephyr": "cpe:2.3:o:zephyrproject:zephyr does exist and zspdx emits it for the Zephyr release itself, but this pin is a development branch with no release version to state. Probes at 3.7.0 and 4.1.0 each match zero CVEs.",
+    "Aaronlu1/tl_matter": "The product under construction: it is the subject of the SBOM, not a dependency of it."
+  }
+}

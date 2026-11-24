@@ -11,7 +11,7 @@ Layout produced:
       sbom/{app,zephyr,build,modules-deps,matter-sources}.spdx
       sbom/telink-matter.cdx.json
       sbom/prebuilt-binaries.txt
-      sbom/trivy-sbom.json
+      sbom/vuln/{zephyr,modules-deps}.txt
       LICENSES/
         README.md
         index.json
@@ -45,7 +45,8 @@ SINGLE_FILES = [
     ("firmware", "{build}/zephyr/zephyr.elf"),
     ("sbom", "{sbom}/telink-matter.cdx.json"),
     ("sbom", "{sbom}/prebuilt-binaries.txt"),
-    ("sbom", "{sbom}/trivy-sbom.json"),
+    ("sbom", "{sbom}/vuln/zephyr.txt"),
+    ("sbom", "{sbom}/vuln/modules-deps.txt"),
 ]
 
 SPDX_TEXT_URL = "https://raw.githubusercontent.com/spdx/license-list-data/v3.26.0/text/{id}.txt"
