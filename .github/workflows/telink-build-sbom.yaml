@@ -93,6 +93,30 @@ jobs:
               run: |
                   ./scripts/run_in_build_env.sh "bash scripts/tools/telink/sbom_build.sh '${{ github.event.inputs.board || 'tl3238x_retention' }}' '${{ github.event.inputs.app || 'examples/light-switch-app/telink' }}' 'out/telink-build' 'out/sbom'"
 
+            # Evidence for VEX triage: the mbedtls feature switches that were
+            # actually compiled into this firmware, taken from the generated
+            # Zephyr .config rather than from source defaults.
+            - name: Export mbedtls build configuration
+              if: always()
+              shell: bash
+              run: |
+                  mkdir -p out/sbom
+                  CFG=out/telink-build/zephyr/.config
+                  if [ ! -f "$CFG" ]; then
+                    echo "no .config; the build did not reach configuration" >&2
+                    exit 0
+                  fi
+                  {
+                    echo "# mbedtls-related switches from $CFG"
+                    grep -E '^CONFIG_(MBEDTLS|PSA|TLS)' "$CFG" || true
+                    echo
+                    echo "# Unset mbedtls symbols"
+                    grep -E '^# CONFIG_(MBEDTLS|PSA|TLS)' "$CFG" || true
+                  } > out/sbom/build-config.txt
+                  wc -l out/sbom/build-config.txt
+                  echo "--- switches used by the VEX review ---"
+                  grep -E 'MBEDTLS_(LMS|AESNI|PKCS7|PEM|X509|KEY_EXCHANGE_DHE|USE_PSA|CTR_DRBG)' out/sbom/build-config.txt || true
+
             # The Matter stack is built by GN through ExternalProject_Add, so zspdx
             # (which walks the CMake codemodel) cannot see it. This recovers the real
             # file list from ninja's own execution log.
@@ -293,6 +317,7 @@ jobs:
                   path: |
                       out/sbom/review/sbom-review.csv
                       out/sbom/review/sbom-gaps.md
+                      out/sbom/build-config.txt
                       out/sbom/prebuilt-binaries.txt
 
             - name: Upload vulnerability report
