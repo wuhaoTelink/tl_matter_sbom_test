@@ -296,8 +296,18 @@ def main():
         f.write(f"Status: **{status}**. Review warnings: {needs_review} "
                 f"of {total_components} components; missing licence texts: {text_missing}.\n\n")
         f.write("Use `sbom/*.spdx` (SPDX 2.3) or `sbom/telink-matter.cdx.json` "
-                "(CycloneDX 1.6); both describe the same components. File hashes "
-                "and licences are inside the SPDX documents.\n\n")
+                "(CycloneDX 1.6); both describe the same components. Every SPDX "
+                "document is also available as JSON under the same name "
+                "(`<document>.spdx.json`).\n\n")
+        f.write("`sbom/files.spdx.json` and `sbom/files.cdx.json` are the "
+                "file-level views; `sbom/dependency-graph.json` holds the "
+                "package graph.\n\n")
+        f.write("`sbom/vex/` carries the vulnerability statements for the "
+                "components Grype flagged (OpenVEX and CycloneDX VEX). A "
+                "`not_affected` statement includes its justification.\n\n")
+        f.write("`sbom/build-config.txt` and `sbom/build-symbols.txt` are the "
+                "configuration and linked-symbol evidence behind those "
+                "statements.\n\n")
         f.write("`LICENSES/` contains referenced texts, sources and status. "
                 "`declarations/` holds short declarations without full terms.\n\n")
         if firmware:
