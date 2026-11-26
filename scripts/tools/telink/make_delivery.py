@@ -47,6 +47,7 @@ SINGLE_FILES = [
     ("sbom", "{sbom}/prebuilt-binaries.txt"),
     ("sbom", "{sbom}/vuln/zephyr.txt"),
     ("sbom", "{sbom}/vuln/modules-deps.txt"),
+    ("sbom", "{sbom}/build-config.txt"),
 ]
 
 SPDX_TEXT_URL = "https://raw.githubusercontent.com/spdx/license-list-data/v3.26.0/text/{id}.txt"
@@ -300,6 +301,33 @@ def main():
             files.append({"path": rel.replace(os.sep, "/"), "sha256": sha256(p)})
     files.sort(key=lambda x: x["path"])
 
+    build_config = None
+    cfg_path = os.path.join(args.out_dir, "sbom", "build-config.txt")
+    if os.path.isfile(cfg_path):
+        zephyr_rev = os.environ.get("TELINK_ZEPHYR_REV", "")
+        version = ""
+        zbase = os.environ.get("TELINK_ZEPHYR_BASE", "")
+        version_file = os.path.join(zbase, "VERSION") if zbase else ""
+        if version_file and os.path.isfile(version_file):
+            parts = {}
+            with open(version_file, encoding="utf-8") as vf:
+                for line in vf:
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        parts[key.strip()] = value.strip()
+            version = ".".join(p for p in (
+                parts.get("VERSION_MAJOR"),
+                parts.get("VERSION_MINOR"),
+                parts.get("PATCHLEVEL"),
+            ) if p)
+        derived = f"Zephyr {version} mbedtls Kconfig" if version else "Zephyr mbedtls Kconfig"
+        build_config = {
+            "file": "sbom/build-config.txt",
+            "sha256": sha256(cfg_path),
+            "zephyrCommit": zephyr_rev,
+            "derivedFrom": derived,
+        }
+
     manifest = {
         "deliveryStatus": status,
         "analysisValid": os.path.isdir(enriched) and len(sbom_files) > 0,
@@ -326,6 +354,7 @@ def main():
         },
         "validationErrorCount": 0,
         "reviewWarningCount": needs_review,
+        "buildConfig": build_config,
         "files": files,
     }
     with open(os.path.join(args.out_dir, "manifest.json"), "w", encoding="utf-8") as f:
