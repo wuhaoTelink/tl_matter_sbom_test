@@ -1,0 +1,401 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:6d5bde79-54ce-4ade-8534-3717e5db3c22",
+  "version": 2,
+  "metadata": {
+    "timestamp": "2026-11-26T00:00:00Z",
+    "component": {
+      "type": "application",
+      "bom-ref": "urn:telink:tl_matter:lightswitch:tl3238x_retention",
+      "name": "Telink Matter light-switch-app (tl3238x_retention)",
+      "version": "ce686e7616"
+    },
+    "tools": [
+      {
+        "vendor": "Telink",
+        "name": "manual VEX triage",
+        "version": "2"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2",
+      "name": "mbedtls-deps",
+      "version": "V3.6.2",
+      "purl": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "bom-ref": "vuln-CVE-2026-34877",
+      "id": "CVE-2026-34877",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34877"
+      },
+      "ratings": [
+        {
+          "severity": "critical"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "The TLS library is not built into this firmware; the serialized SSL session code is absent. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set; TLS 1.2/1.3 versions are not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2026-34872",
+      "id": "CVE-2026-34872",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34872"
+      },
+      "ratings": [
+        {
+          "severity": "critical"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "Finite-field Diffie-Hellman is not compiled; Matter uses PASE/CASE over P-256. Evidence: # CONFIG_MBEDTLS_DHM_C is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-47917",
+      "id": "CVE-2025-47917",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-47917"
+      },
+      "ratings": [
+        {
+          "severity": "critical"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_reachable",
+        "detail": "X.509 CSR writing is compiled but has no call site in the Telink platform or the application; the only CSR call sites in the tree are the Infineon and NXP fallbacks. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, but no mbedtls_x509write_csr in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-48965",
+      "id": "CVE-2025-48965",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-48965"
+      },
+      "ratings": [
+        {
+          "severity": "high"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_reachable",
+        "detail": "Same call graph as CVE-2025-47917: no X.509 name construction at runtime. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, no runtime caller. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-52496",
+      "id": "CVE-2025-52496",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-52496"
+      },
+      "ratings": [
+        {
+          "severity": "high"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "AESNI is an x86-only feature; the RISC-V build does not contain that code. Evidence: riscv64 build; no MBEDTLS_AESNI_C in the configuration. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2026-25835",
+      "id": "CVE-2026-25835",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25835"
+      },
+      "ratings": [
+        {
+          "severity": "high"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "exploitable",
+        "detail": "CTR_DRBG is enabled and provides the DRBG path used by the firmware. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      },
+      "recommendation": "Upgrade Mbed TLS to 3.6.6 or backport the PRNG seed fix; track as a release blocker. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version."
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-49601",
+      "id": "CVE-2025-49601",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-49601"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "LMS is neither configured nor used by Matter. Evidence: no CONFIG_MBEDTLS_LMS_C; no LMS usage in the application. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-52497",
+      "id": "CVE-2025-52497",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-52497"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "PEM certificate parsing is disabled in this configuration. Evidence: # CONFIG_MBEDTLS_PEM_CERTIFICATE_FORMAT is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-27810",
+      "id": "CVE-2025-27810",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-27810"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "TLS is not built into the firmware; the TLS Finished path is absent. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-66442",
+      "id": "CVE-2025-66442",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-66442"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_reachable",
+        "detail": "The issue requires LLVM select-optimize; this build uses GCC. CBC mode is disabled as well. Evidence: # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set; Zephyr GCC toolchain. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-59438",
+      "id": "CVE-2025-59438",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-59438"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "The advisory describes a padding oracle through PSA error-reporting timing; PSA crypto and CBC mode are disabled in this firmware. Evidence: # CONFIG_MBEDTLS_PSA_CRYPTO_C is not set; # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-54764",
+      "id": "CVE-2025-54764",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-54764"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_reachable",
+        "detail": "The issue affects RSA operations; the Telink platform and application do not call mbedtls_rsa_* (Matter uses ECDSA/ECDH), so the RSA path is not reached. Evidence: source search: no mbedtls_rsa_* in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2026-34871",
+      "id": "CVE-2026-34871",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34871"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "exploitable",
+        "detail": "CTR_DRBG is enabled; same PRNG seed family as CVE-2026-25835. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      },
+      "recommendation": "Upgrade to 3.6.6 or backport; same PRNG family as CVE-2026-25835. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version."
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-27809",
+      "id": "CVE-2025-27809",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-27809"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "No TLS client is built into the firmware; Matter commissioning uses PASE/CASE. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-49600",
+      "id": "CVE-2025-49600",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-49600"
+      },
+      "ratings": [
+        {
+          "severity": "medium"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "LMS is neither configured nor used by Matter. Evidence: no CONFIG_MBEDTLS_LMS_C. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    },
+    {
+      "bom-ref": "vuln-CVE-2025-49087",
+      "id": "CVE-2025-49087",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-49087"
+      },
+      "ratings": [
+        {
+          "severity": "low"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "CBC mode is disabled, so PKCS#7 padding removal is absent. Evidence: # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      }
+    }
+  ]
+}

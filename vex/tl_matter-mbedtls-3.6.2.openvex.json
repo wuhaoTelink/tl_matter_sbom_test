@@ -1,0 +1,218 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/wuhaoTelink/tl_matter_sbom_test/vex/mbedtls-3.6.2",
+  "author": "Telink Semiconductor",
+  "timestamp": "2026-11-26T00:00:00Z",
+  "version": 2,
+  "tooling": "Triage against the generated Zephyr .config and source call sites",
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2026-34877"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The TLS library is not built into this firmware; the serialized SSL session code is absent. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set; TLS 1.2/1.3 versions are not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-34872"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "Finite-field Diffie-Hellman is not compiled; Matter uses PASE/CASE over P-256. Evidence: # CONFIG_MBEDTLS_DHM_C is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-47917"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "X.509 CSR writing is compiled but has no call site in the Telink platform or the application; the only CSR call sites in the tree are the Infineon and NXP fallbacks. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, but no mbedtls_x509write_csr in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-48965"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Same call graph as CVE-2025-47917: no X.509 name construction at runtime. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, no runtime caller. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-52496"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "AESNI is an x86-only feature; the RISC-V build does not contain that code. Evidence: riscv64 build; no MBEDTLS_AESNI_C in the configuration. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-25835"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "affected",
+      "action_statement": "Upgrade Mbed TLS to 3.6.6 or backport the PRNG seed fix; track as a release blocker. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version.",
+      "impact_statement": "CTR_DRBG is enabled and provides the DRBG path used by the firmware. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-49601"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "LMS is neither configured nor used by Matter. Evidence: no CONFIG_MBEDTLS_LMS_C; no LMS usage in the application. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-52497"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "PEM certificate parsing is disabled in this configuration. Evidence: # CONFIG_MBEDTLS_PEM_CERTIFICATE_FORMAT is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-27810"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "TLS is not built into the firmware; the TLS Finished path is absent. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-66442"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "The issue requires LLVM select-optimize; this build uses GCC. CBC mode is disabled as well. Evidence: # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set; Zephyr GCC toolchain. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-59438"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "The advisory describes a padding oracle through PSA error-reporting timing; PSA crypto and CBC mode are disabled in this firmware. Evidence: # CONFIG_MBEDTLS_PSA_CRYPTO_C is not set; # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-54764"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "The issue affects RSA operations; the Telink platform and application do not call mbedtls_rsa_* (Matter uses ECDSA/ECDH), so the RSA path is not reached. Evidence: source search: no mbedtls_rsa_* in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-34871"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "affected",
+      "action_statement": "Upgrade to 3.6.6 or backport; same PRNG family as CVE-2026-25835. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version.",
+      "impact_statement": "CTR_DRBG is enabled; same PRNG seed family as CVE-2026-25835. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-27809"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "No TLS client is built into the firmware; Matter commissioning uses PASE/CASE. Evidence: # CONFIG_MBEDTLS_LIBRARY is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-49600"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "LMS is neither configured nor used by Matter. Evidence: no CONFIG_MBEDTLS_LMS_C. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-49087"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "CBC mode is disabled, so PKCS#7 padding removal is absent. Evidence: # CONFIG_MBEDTLS_CIPHER_MODE_CBC_ENABLED is not set. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+    }
+  ]
+}

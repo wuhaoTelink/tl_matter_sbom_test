@@ -48,6 +48,7 @@ SINGLE_FILES = [
     ("sbom", "{sbom}/vuln/zephyr.txt"),
     ("sbom", "{sbom}/vuln/modules-deps.txt"),
     ("sbom", "{sbom}/build-config.txt"),
+    ("sbom", "{sbom}/build-symbols.txt"),
 ]
 
 SPDX_TEXT_URL = "https://raw.githubusercontent.com/spdx/license-list-data/v3.26.0/text/{id}.txt"
@@ -220,6 +221,7 @@ def main():
     ap.add_argument("--sbom-dir", default="out/sbom")
     ap.add_argument("--review-dir", default=None, help="default: <sbom-dir>/review")
     ap.add_argument("--out-dir", default="out/delivery")
+    ap.add_argument("--vex-dir", default="vex", help="directory with VEX JSON documents")
     ap.add_argument("--zip", default="", help="also write a zip of the bundle")
     args = ap.parse_args()
 
@@ -243,6 +245,29 @@ def main():
             if name.endswith(".spdx"):
                 shutil.copy2(os.path.join(enriched, name),
                              os.path.join(args.out_dir, "sbom", name))
+
+    # Auxiliary views: per-document SPDX JSON, file-level JSON, dependency graph.
+    aux_dir = os.path.join(args.sbom_dir, "aux")
+    if os.path.isdir(aux_dir):
+        for name in sorted(os.listdir(aux_dir)):
+            if name.endswith(".json"):
+                shutil.copy2(os.path.join(aux_dir, name),
+                             os.path.join(args.out_dir, "sbom", name))
+    else:
+        print(f"skip (missing): {aux_dir}")
+
+    # VEX statements, if the repository carries them.
+    vex_dir = args.vex_dir
+    vex_files = []
+    if vex_dir and os.path.isdir(vex_dir):
+        os.makedirs(os.path.join(args.out_dir, "sbom", "vex"), exist_ok=True)
+        for name in sorted(os.listdir(vex_dir)):
+            if name.endswith(".json"):
+                dst = os.path.join(args.out_dir, "sbom", "vex", name)
+                shutil.copy2(os.path.join(vex_dir, name), dst)
+                vex_files.append("sbom/vex/" + name)
+    else:
+        print(f"skip (missing): {vex_dir}")
 
     licenses = collect_licenses(args.sbom_dir)
     index, license_counts = write_licenses(args.out_dir, licenses)
@@ -355,6 +380,9 @@ def main():
         "validationErrorCount": 0,
         "reviewWarningCount": needs_review,
         "buildConfig": build_config,
+        "vexFiles": vex_files,
+        "sbomJsonFiles": [f"sbom/{n}" for n in sorted(os.listdir(os.path.join(args.out_dir, "sbom")))
+                          if n.endswith(".json")],
         "files": files,
     }
     with open(os.path.join(args.out_dir, "manifest.json"), "w", encoding="utf-8") as f:

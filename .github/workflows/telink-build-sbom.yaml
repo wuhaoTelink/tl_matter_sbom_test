@@ -116,6 +116,20 @@ jobs:
                   wc -l out/sbom/build-config.txt
                   echo "--- switches used by the VEX review ---"
                   grep -E 'MBEDTLS_(LMS|AESNI|PKCS7|PEM|X509|KEY_EXCHANGE_DHE|USE_PSA|CTR_DRBG)' out/sbom/build-config.txt || true
+                  # Which mbedtls entry points were actually linked into the image.
+                  NM="$(command -v riscv64-zephyr-elf-nm || true)"
+                  if [ -z "$NM" ] && [ -n "${TELINK_ZEPHYR_SDK_DIR:-}" ]; then
+                    NM="$(find "$TELINK_ZEPHYR_SDK_DIR" -name riscv64-zephyr-elf-nm 2>/dev/null | head -1)"
+                  fi
+                  if [ -n "$NM" ] && [ -x "$NM" ]; then
+                    {
+                      echo "# mbedtls symbols in zephyr.elf"
+                      "$NM" out/telink-build/zephyr/zephyr.elf 2>/dev/null | grep -E 'mbedtls_(rsa|x509write_csr|pem_read|psa_crypto_init)' || echo "(none)"
+                    } > out/sbom/build-symbols.txt
+                    wc -l out/sbom/build-symbols.txt
+                    echo "--- symbols used by the VEX review ---"
+                    grep -E 'mbedtls_rsa|mbedtls_x509write_csr' out/sbom/build-symbols.txt || true
+                  fi
 
             # The Matter stack is built by GN through ExternalProject_Add, so zspdx
             # (which walks the CMake codemodel) cannot see it. This recovers the real
@@ -142,6 +156,12 @@ jobs:
             - name: Convert SBOM to CycloneDX
               run: |
                   python3 scripts/tools/telink/spdx_to_cyclonedx.py out/sbom/enriched -o out/sbom/telink-matter.cdx.json
+
+            # SPDX JSON views, a file-level pair and a dependency graph, all
+            # derived from the same enriched documents.
+            - name: Generate auxiliary SBOM views
+              run: |
+                  python3 scripts/tools/telink/make_auxiliary.py --sbom-dir out/sbom/enriched --out-dir out/sbom/aux
 
             # Grype, not Trivy. Trivy's SPDX decoder reads only purl
             # (parseExternalReferences filters on RefTypePurl and skips every
@@ -318,6 +338,7 @@ jobs:
                       out/sbom/review/sbom-review.csv
                       out/sbom/review/sbom-gaps.md
                       out/sbom/build-config.txt
+                      out/sbom/build-symbols.txt
                       out/sbom/prebuilt-binaries.txt
 
             - name: Upload vulnerability report
