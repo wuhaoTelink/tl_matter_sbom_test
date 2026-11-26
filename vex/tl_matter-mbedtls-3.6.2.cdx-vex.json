@@ -95,7 +95,7 @@
       "analysis": {
         "state": "not_affected",
         "justification": "code_not_reachable",
-        "detail": "X.509 CSR writing is compiled but has no call site in the Telink platform or the application; the only CSR call sites in the tree are the Infineon and NXP fallbacks. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, but no mbedtls_x509write_csr in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+        "detail": "X.509 CSR writing is compiled but has no call site in the Telink platform or the application; the only CSR call sites in the tree are the Infineon and NXP fallbacks. Evidence: symbols present in zephyr.elf, but no mbedtls_x509write_csr call sites in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
       }
     },
     {
@@ -118,7 +118,7 @@
       "analysis": {
         "state": "not_affected",
         "justification": "code_not_reachable",
-        "detail": "Same call graph as CVE-2025-47917: no X.509 name construction at runtime. Evidence: CONFIG_MBEDTLS_X509_CSR_WRITE_C=y, no runtime caller. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+        "detail": "Same call graph as CVE-2025-47917: no X.509 name construction at runtime. Evidence: symbols present in zephyr.elf, no runtime caller. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
       }
     },
     {
@@ -301,8 +301,8 @@
       ],
       "analysis": {
         "state": "not_affected",
-        "justification": "code_not_reachable",
-        "detail": "The issue affects RSA operations; the Telink platform and application do not call mbedtls_rsa_* (Matter uses ECDSA/ECDH), so the RSA path is not reached. Evidence: source search: no mbedtls_rsa_* in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+        "justification": "code_not_present",
+        "detail": "RSA code is not linked into the image, and the Telink platform and application have no mbedtls_rsa_* call sites (Matter uses ECDSA/ECDH). Evidence: build-symbols.txt: no mbedtls_rsa* symbols in zephyr.elf; source search: no call sites in src/platform/telink or examples. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
       }
     },
     {
