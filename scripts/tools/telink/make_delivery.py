@@ -279,8 +279,11 @@ def main():
         shutil.copy2(args.manual_review, dst)
         with open(dst, encoding="utf-8", newline="") as rf:
             rows = list(csv.DictReader(rf))
+        # Open means "not decided yet": a literal pending row or one still
+        # under investigation. Both must be visible to the recipient.
+        open_markers = ("pending", "under_investigation")
         pending = sum(1 for r in rows
-                      if "pending" in (r.get("conclusion") or "").lower())
+                      if any(m in (r.get("conclusion") or "").lower() for m in open_markers))
         manual_review = {
             "file": "sbom/manual-review.csv",
             "sha256": sha256(dst),
