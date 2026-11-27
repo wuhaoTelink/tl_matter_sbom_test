@@ -30,6 +30,7 @@ Usage:
 """
 
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -222,6 +223,8 @@ def main():
     ap.add_argument("--review-dir", default=None, help="default: <sbom-dir>/review")
     ap.add_argument("--out-dir", default="out/delivery")
     ap.add_argument("--vex-dir", default="vex", help="directory with VEX JSON documents")
+    ap.add_argument("--manual-review", default="manual-review/manual-review.csv",
+                    help="manual review record for components the scan cannot cover")
     ap.add_argument("--zip", default="", help="also write a zip of the bundle")
     args = ap.parse_args()
 
@@ -269,6 +272,24 @@ def main():
     else:
         print(f"skip (missing): {vex_dir}")
 
+    # Manual review record for components the scanner cannot cover.
+    manual_review = None
+    if args.manual_review and os.path.isfile(args.manual_review):
+        dst = os.path.join(args.out_dir, "sbom", "manual-review.csv")
+        shutil.copy2(args.manual_review, dst)
+        with open(dst, encoding="utf-8", newline="") as rf:
+            rows = list(csv.DictReader(rf))
+        pending = sum(1 for r in rows
+                      if "pending" in (r.get("conclusion") or "").lower())
+        manual_review = {
+            "file": "sbom/manual-review.csv",
+            "sha256": sha256(dst),
+            "components": len(rows),
+            "pending": pending,
+        }
+    else:
+        print(f"skip (missing): {args.manual_review}")
+
     licenses = collect_licenses(args.sbom_dir)
     index, license_counts = write_licenses(args.out_dir, licenses)
     print(f"licenses: {len(index)} identified, {license_counts}")
@@ -308,6 +329,10 @@ def main():
         f.write("`sbom/build-config.txt` and `sbom/build-symbols.txt` are the "
                 "configuration and linked-symbol evidence behind those "
                 "statements.\n\n")
+        f.write("`sbom/manual-review.csv` records the components the scanner "
+                "cannot cover (no CPE), their versions and the review "
+                "conclusion. A `pending` conclusion means the review is still "
+                "open and the component must not be treated as clean.\n\n")
         f.write("`LICENSES/` contains referenced texts, sources and status. "
                 "`declarations/` holds short declarations without full terms.\n\n")
         if firmware:
@@ -391,6 +416,7 @@ def main():
         "reviewWarningCount": needs_review,
         "buildConfig": build_config,
         "vexFiles": vex_files,
+        "manualReview": manual_review,
         "sbomJsonFiles": [f"sbom/{n}" for n in sorted(os.listdir(os.path.join(args.out_dir, "sbom")))
                           if n.endswith(".json")],
         "files": files,
