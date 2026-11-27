@@ -340,6 +340,7 @@ jobs:
                       out/sbom/build-config.txt
                       out/sbom/build-symbols.txt
                       out/sbom/prebuilt-binaries.txt
+                      manual-review/manual-review.csv
 
             - name: Upload vulnerability report
               if: always()
