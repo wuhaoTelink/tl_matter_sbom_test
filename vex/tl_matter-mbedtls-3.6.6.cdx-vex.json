@@ -2,30 +2,30 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "serialNumber": "urn:uuid:6d5bde79-54ce-4ade-8534-3717e5db3c22",
-  "version": 2,
+  "version": 3,
   "metadata": {
-    "timestamp": "2026-11-26T00:00:00Z",
+    "timestamp": "2026-11-27T00:00:00Z",
     "component": {
       "type": "application",
       "bom-ref": "urn:telink:tl_matter:lightswitch:tl3238x_retention",
       "name": "Telink Matter light-switch-app (tl3238x_retention)",
-      "version": "ce686e7616"
+      "version": "0f0e526adc"
     },
     "tools": [
       {
         "vendor": "Telink",
         "name": "manual VEX triage",
-        "version": "2"
+        "version": "3"
       }
     ]
   },
   "components": [
     {
       "type": "library",
-      "bom-ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2",
+      "bom-ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6",
       "name": "mbedtls-deps",
-      "version": "V3.6.2",
-      "purl": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+      "version": "v3.6.6",
+      "purl": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
     }
   ],
   "vulnerabilities": [
@@ -43,7 +43,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -66,7 +66,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -89,7 +89,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -112,7 +112,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -135,7 +135,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -158,14 +158,14 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
-        "state": "exploitable",
-        "detail": "CTR_DRBG is enabled and provides the DRBG path used by the firmware. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+        "state": "fixed",
+        "detail": "The PRNG seed misuse that made 3.6.2 a release blocker is corrected in 3.6.6. Evidence: mbedtls-sources purl pkg:github/zephyrproject-rtos/mbedtls@11c0f18ab888fed4363eeeb43fd734246dc3c93b; mbedtls-deps CPE cpe:2.3:a:arm:mbed_tls:3.6.6 taken from the module's own zephyr/module.yml; build .config unchanged (sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f)."
       },
-      "recommendation": "Upgrade Mbed TLS to 3.6.6 or backport the PRNG seed fix; track as a release blocker. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version."
+      "recommendation": "No action required: Mbed TLS 3.6.6 contains the fix."
     },
     {
       "bom-ref": "vuln-CVE-2025-49601",
@@ -181,7 +181,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -204,7 +204,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -227,7 +227,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -250,7 +250,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -273,7 +273,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -296,7 +296,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -319,14 +319,14 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
-        "state": "exploitable",
-        "detail": "CTR_DRBG is enabled; same PRNG seed family as CVE-2026-25835. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+        "state": "fixed",
+        "detail": "Same PRNG seed family as CVE-2026-25835; the 3.6.6 fix covers both. Evidence: mbedtls-sources purl pkg:github/zephyrproject-rtos/mbedtls@11c0f18ab888fed4363eeeb43fd734246dc3c93b; mbedtls-deps CPE cpe:2.3:a:arm:mbed_tls:3.6.6; build .config unchanged (sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f)."
       },
-      "recommendation": "Upgrade to 3.6.6 or backport; same PRNG family as CVE-2026-25835. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version."
+      "recommendation": "No action required: Mbed TLS 3.6.6 contains the fix."
     },
     {
       "bom-ref": "vuln-CVE-2025-27809",
@@ -342,7 +342,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -365,7 +365,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {
@@ -388,7 +388,7 @@
       ],
       "affects": [
         {
-          "ref": "pkg:github/Mbed-TLS/mbedtls@V3.6.2"
+          "ref": "pkg:github/Mbed-TLS/mbedtls@v3.6.6"
         }
       ],
       "analysis": {

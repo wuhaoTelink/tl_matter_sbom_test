@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/wuhaoTelink/tl_matter_sbom_test/vex/mbedtls-3.6.2",
+  "@id": "https://github.com/wuhaoTelink/tl_matter_sbom_test/vex/mbedtls-3.6.6",
   "author": "Telink Semiconductor",
-  "timestamp": "2026-11-26T00:00:00Z",
-  "version": 2,
-  "tooling": "Triage against the generated Zephyr .config and source call sites",
+  "timestamp": "2026-11-27T00:00:00Z",
+  "version": 3,
+  "tooling": "Triage against the generated Zephyr .config, source call sites, and a Grype scan of the Mbed TLS 3.6.6 SBOM",
   "statements": [
     {
       "vulnerability": {
@@ -12,7 +12,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -25,7 +25,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -38,7 +38,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -51,7 +51,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -64,7 +64,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -77,12 +77,12 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
-      "status": "affected",
-      "action_statement": "Upgrade Mbed TLS to 3.6.6 or backport the PRNG seed fix; track as a release blocker. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version.",
-      "impact_statement": "CTR_DRBG is enabled and provides the DRBG path used by the firmware. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      "status": "fixed",
+      "action_statement": "No action required: this build ships Mbed TLS 3.6.6, the first release outside the affected range (NVD: arm:mbed_tls >= 2.18.0, < 3.6.6). Verified with Grype against the generated SBOM: no match for this CVE on mbedtls-deps 3.6.6.",
+      "impact_statement": "The PRNG seed misuse that made 3.6.2 a release blocker is corrected in 3.6.6. Evidence: mbedtls-sources purl pkg:github/zephyrproject-rtos/mbedtls@11c0f18ab888fed4363eeeb43fd734246dc3c93b; mbedtls-deps CPE cpe:2.3:a:arm:mbed_tls:3.6.6 taken from the module's own zephyr/module.yml; build .config unchanged (sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f)."
     },
     {
       "vulnerability": {
@@ -90,7 +90,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -103,7 +103,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -116,7 +116,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -129,7 +129,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -142,7 +142,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -155,7 +155,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -168,12 +168,12 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
-      "status": "affected",
-      "action_statement": "Upgrade to 3.6.6 or backport; same PRNG family as CVE-2026-25835. Longer term: Zephyr 4.4 ships Mbed TLS 4.1.0, which is outside the affected range of every CVE in this report. The upgrade requires a tl_zephyr port for Zephyr 4.4 (no such branch exists in the Telink fork yet) and a fresh configuration export, because the mbedtls profile may change with the major version.",
-      "impact_statement": "CTR_DRBG is enabled; same PRNG seed family as CVE-2026-25835. Evidence: CONFIG_MBEDTLS_CTR_DRBG_ENABLED=y. Configuration inherited from the Zephyr 4.1.0 mbedtls Kconfig profile (zephyr@80de0ea4045869967c6b8e3d86b761955b1c981b); generated .config export sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f."
+      "status": "fixed",
+      "action_statement": "No action required: this build ships Mbed TLS 3.6.6, the first release outside the affected range (NVD: arm:mbed_tls < 3.6.6, 4.x < 4.1.0). Verified with Grype against the generated SBOM: no match for this CVE on mbedtls-deps 3.6.6.",
+      "impact_statement": "Same PRNG seed family as CVE-2026-25835; the 3.6.6 fix covers both. Evidence: mbedtls-sources purl pkg:github/zephyrproject-rtos/mbedtls@11c0f18ab888fed4363eeeb43fd734246dc3c93b; mbedtls-deps CPE cpe:2.3:a:arm:mbed_tls:3.6.6; build .config unchanged (sha256 6e75f5e5dd99480a8679106b91646c229dcec62d0a4a5dfad4b4d3bb2e14496f)."
     },
     {
       "vulnerability": {
@@ -181,7 +181,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -194,7 +194,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
@@ -207,7 +207,7 @@
       },
       "products": [
         {
-          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@ce686e7616"
+          "@id": "pkg:github/wuhaoTelink/tl_matter_sbom_test@0f0e526adc44c5fab8dee59e9374448c0c0bbdcb"
         }
       ],
       "status": "not_affected",
