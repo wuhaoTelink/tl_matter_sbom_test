@@ -56,6 +56,13 @@ env:
     # commit in the path keeps two builds of different revisions apart while
     # still naming the project they belong to.
     SBOM_NAMESPACE_PREFIX: https://github.com/${{ github.repository }}/spdx/${{ github.sha }}
+    # Temporary experiment: build with Mbed TLS 3.6.6 instead of the 3.6.2 that
+    # tl_zephyr 4.1 pins, to clear CVE-2026-25835 and CVE-2026-34871. The SHA is
+    # the last commit of the Zephyr fork's 3.6.6 line that still carries the
+    # Zephyr glue (module name "mbedtls", build.cmake-ext/kconfig-ext: true).
+    # The tag zephyr_mbedtls_v3.6.6 points one commit further, at the TF-M
+    # variant that drops that glue, so the tag alone must not be used here.
+    MBEDTLS_REV: 11c0f18ab888fed4363eeeb43fd734246dc3c93b
 
 jobs:
     build-sbom:
@@ -88,6 +95,27 @@ jobs:
             - name: Pin Telink Zephyr and modules to the release revision
               run: |
                   scripts/run_in_build_env.sh "python3 scripts/tools/telink/update_zephyr.py $TELINK_ZEPHYR_REV"
+
+            # west update clones with --depth=1, so the target revision is not in
+            # the module clone yet; fetch the tag it lives on before resetting.
+            # The module path matches west.yml's "path: modules/crypto/mbedtls".
+            - name: Override Mbed TLS to 3.6.6 (experiment)
+              shell: bash
+              run: |
+                  MBEDTLS_DIR="${TELINK_ZEPHYR_BASE}/../modules/crypto/mbedtls"
+                  if [ ! -d "$MBEDTLS_DIR/.git" ]; then
+                    echo "no mbedtls module at $MBEDTLS_DIR; workspace layout:" >&2
+                    ls -la "$TELINK_ZEPHYR_BASE/.." >&2
+                    exit 1
+                  fi
+                  URL="$(git -C "$MBEDTLS_DIR" remote get-url origin 2>/dev/null || echo https://github.com/zephyrproject-rtos/mbedtls)"
+                  echo "mbedtls module: $MBEDTLS_DIR (remote $URL)"
+                  # Depth 2 from the tag: the tag itself (TF-M variant) plus the
+                  # Zephyr-glue commit that is its parent, which is what we reset to.
+                  git -C "$MBEDTLS_DIR" fetch --depth=2 "$URL" "refs/tags/zephyr_mbedtls_v3.6.6"
+                  git -C "$MBEDTLS_DIR" reset --hard "$MBEDTLS_REV"
+                  git -C "$MBEDTLS_DIR" log -1 --oneline
+                  grep -E 'mbed_tls:' "$MBEDTLS_DIR/zephyr/module.yml"
 
             - name: Build example and generate SPDX SBOM
               run: |
